@@ -1,0 +1,55 @@
+<div class="admin__control-wysiwig">
+    <div id="buttonspagebuilder_html_form_html" class="buttons-set">
+        <button type="button"
+                class="scalable action-add-widget plugin"
+                click="clickInsertWidget">
+            <span>
+                <span>
+                    <span translate="'Insert Widget...'"></span>
+                </span>
+            </span>
+        </button>
+        <button type="button"
+                class="scalable action-add-image plugin"
+                click="clickInsertImage">
+            <span>
+                <span>
+                    <span translate="'Insert Image...'"></span>
+                </span>
+            </span>
+        </button>
+        <button type="button"
+                class="scalable add-variable plugin"
+                click="clickInsertVariable">
+            <span>
+                <span>
+                    <span translate="'Insert Variable...'"></span>
+                </span>
+            </span>
+        </button>
+        <button type="button"
+                class="scalable generate-mageai-content"
+                click="clickMageAIGenerateContent"
+                if="isBtnVisible()">
+            <span>
+                <span>
+                    <span translate="'Generate content with MageAI...'"></span>
+                </span>
+            </span>
+        </button>
+    </div>
+</div>
+<textarea class="admin__control-textarea" data-bind="
+    value: value,
+    valueUpdate: valueUpdate,
+    hasFocus: focused,
+    attr: {
+        name: inputName,
+        cols: cols,
+        rows: rows,
+        'aria-describedby': noticeId,
+        placeholder: placeholder,
+        id: uid,
+        disabled: disabled
+    }"
+></textarea>

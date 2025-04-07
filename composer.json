@@ -1,0 +1,21 @@
+{
+    "name": "mageprince/magento2-mage-ai",
+    "description": "Magento 2 Content Generator Extension",
+    "type": "magento2-module",
+    "version": "1.0.0",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Mageprince",
+            "email": "support@mageprince.com"
+        }
+    ],
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Mageprince\\MageAI\\": ""
+        }
+    }
+}

@@ -1,0 +1,13 @@
+<?php
+/**
+ * @var \Magento\Framework\View\Element\Template $block
+ * @var \Mageprince\MageAI\Helper\Data $helper
+ */
+//@codingStandardsIgnoreStart
+$helper = $this->helper(\Mageprince\MageAI\Helper\Data::class);
+//@codingStandardsIgnoreEnd
+?>
+<script>
+    window.mageAIAjaxUrl = '<?= /* @noEscape */  $block->getUrl('mp_mageai/index/generate') ?>';
+    window.isMpMageAIEnabled = '<?= /* @noEscape */ $helper->isEnabled() ?>';
+</script>
