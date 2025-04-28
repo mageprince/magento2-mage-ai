@@ -1,6 +1,7 @@
 var config = {
     map: {
         '*': {
+            'mageAiGenerate': 'Mageprince_MageAI/js/generate',
             'Magento_PageBuilder/template/form/element/html-code.html':
                 'Mageprince_MageAI/template/html-code.html'
         }

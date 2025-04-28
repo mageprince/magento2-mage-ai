@@ -29,13 +29,13 @@
             <api>
                 <base_url>https://api.openai.com</base_url>
                 <api_secret backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
-                <model>gpt-4o-mini</model>
+                <model>gpt-3.5-turbo</model>
             </api>
             <product_description>
                 <attribute>name</attribute>
-                <description_prompt><![CDATA[Write a product description (~%d words) for product %s: "%s". Use only HTML body content, no <html>, <head>, or <body> tags.]]></description_prompt>
+                <description_prompt><![CDATA[Write a product description (~%d words) for product %s: "%s". Use only HTML body content, no head or body tags.]]></description_prompt>
                 <description_words_count>600</description_words_count>
-                <short_description_prompt><![CDATA[Write a short product description (~%d words) for product %s: "%s". Use only HTML body content, no <html>, <head>, or <body> tags.]]></short_description_prompt>
+                <short_description_prompt><![CDATA[Write a short product description (~%d words) for product %s: "%s". Use only HTML body content, no head or body tags.]]></short_description_prompt>
                 <short_description_words_count>100</short_description_words_count>
             </product_description>
         </mageai>

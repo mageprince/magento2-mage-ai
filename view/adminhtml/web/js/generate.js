@@ -1,41 +1,41 @@
-require([
+define([
     'jquery',
-    'Magento_Ui/js/modal/alert'
-], function ($, alert) {
+    'Mageprince_MageAI/js/model/mage-ai'
+], function ($, mageAIModel) {
     'use strict';
 
-    $(document).on('click', '.generate-mageai-short-content', function () {
-        var descriptionField = $(this).parent().parent().find('iframe').contents().find('body');
-        var textareaField = $(this).parent().parent().find('textarea');
-        var sku = $("input[name='product[sku]']").val();
-        var type = 'short';
-        if($(this).attr('id') == 'product_form_description_mageai') {
-            type = 'full';
-        }
-        $.ajax({
-            url: window.mageAIAjaxUrl,
-            type: 'POST',
-            showLoader: true,
-            data: {
-                'form_key': FORM_KEY,
-                'sku': sku,
-                'type': type
-            },
-            success: function(response) {
-                if (response.error == false) {
-                    var descriptionContent = response.data;
-                    descriptionField.html(descriptionContent).change();
-                    textareaField.val(descriptionContent).change();
-                } else {
-                    alert({
-                        title: $.mage.__('API Error'),
-                        content: response.data
-                    });
+    $.widget('mage.mageAigenerateWidget', {
+
+        /**
+         * Initializes event listeners for generating product descriptions.
+         */
+        _create: function () {
+            // Listen for click events on the standard generate button
+            $(document).on('click', mageAIModel.options.generateBtnSelector, function () {
+                var currentTarget = this;
+                var sku = $("input[name='product[sku]']").val();
+                var type = 'full';
+                if($(this).attr('id') == mageAIModel.options.shortDescriptionFieldIdentifier) {
+                    type = 'short';
                 }
-            },
-            error: function(XMLHttpRequest, textStatus, errorThrown) {
-                console.log(errorThrown);
-            }
-        });
+
+                mageAIModel.generateContent(sku, type, false)
+                    .done(function (content) {
+                        if (content) {
+                            mageAIModel.updateDescription(content, currentTarget);
+                        }
+                    })
+                    .fail(function (error) {
+                        console.error('Error generating content:', error);
+                    });
+            });
+
+            // Listen for click events on the advanced generate button
+            $(document).on('click', mageAIModel.options.advancedGenerateBtnSelector, function (event) {
+                mageAIModel.clickAdvancedGenerateButton(this);
+            });
+        }
     });
+
+    return $.mage.mageAigenerateWidget;
 });
