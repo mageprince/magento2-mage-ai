@@ -87,11 +87,17 @@ class Generate extends Action implements HttpPostActionInterface
         $isEnabled = $this->helper->isEnabled();
         if ($isEnabled) {
             try {
-                $sku = $this->getRequest()->getParam('sku', false);
-                if ($sku) {
-                    $product = $this->productRepository->get($sku);
-                    $type = $this->getRequest()->getParam('type');
-                    $data = $this->queryCompletion->makeRequest($product, $type);
+                $customPrompt = $this->getRequest()->getParam('custom_prompt');
+                if ($customPrompt === 'false') {
+                    $sku = $this->getRequest()->getParam('sku', false);
+                    if ($sku) {
+                        $product = $this->productRepository->get($sku);
+                        $type = $this->getRequest()->getParam('type');
+                        $data = $this->queryCompletion->generateProductDescription($product, $type);
+                        $response = ['error' => false, 'data' => $data];
+                    }
+                } else {
+                    $data = $this->queryCompletion->generateCustomContent($customPrompt);
                     $response = ['error' => false, 'data' => $data];
                 }
             } catch (QueryException $e) {

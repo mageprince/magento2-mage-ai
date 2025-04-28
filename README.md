@@ -16,7 +16,7 @@ This Magento 2 extension uses OpenAI’s GPT models (ChatGPT) to automatically g
 ## Usage
 1. Go to `Stores > Configuration > Mageprince > Mage AI`
 2. Add your OpenAI API Secret (ensure your quota allows access to the chosen model)
-3. Open any product and click “Generate content with MageAI” in the Short/Long Description editor
+3. Open any product and click “Generate with MageAI” in the Short/Long Description editor
 4. Watch the AI generate polished, HTML-ready content instantly
 5. Save Product
  

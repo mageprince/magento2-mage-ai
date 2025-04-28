@@ -1,0 +1,49 @@
+<?php
+/**
+ * @var \Magento\Framework\View\Element\Template $block
+ * @var \Mageprince\MageAI\Helper\Data $helper
+ * @var \Magento\Framework\Escaper $escaper
+ */
+// phpcs:disable Generic.Files.LineLength
+// phpcs:disable Magento2.Templates.ThisInTemplate
+$helper = $this->helper(\Mageprince\MageAI\Helper\Data::class);
+$isEnabled = $helper->isEnabled();
+?>
+<?php if ($isEnabled): ?>
+    <div id="advanced-generate-modal" style="display:none;">
+        <?php $generateAjaxUrl = $block->getUrl('mp_mageai/index/generate'); ?>
+        <div class="generate-modal-body-content">
+            <form id="mp-prompt-generate-form">
+                <fieldset class="admin__fieldset">
+                    <div class="admin__field admin__field-wide">
+                        <div class="admin__field-control">
+                            <textarea
+                                type="text"
+                                rows="3"
+                                id="mp-custom-prompt"
+                                class="admin__control-text"
+                                placeholder="E.g. Create an engaging HTML product description using the following details:&#10;Product Name: Proteus Fitness Jackshirt&#10;Color: Blue"
+                                name="custom_prompt"></textarea>
+                            <div class="admin__field-note mpai-modal-note">
+                                <span>
+                                    <?= $escaper->escapeHtml(__('Please provide key details to generate your custom content.')) ?>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+    <script>
+        window.mageAIAjaxUrl = '<?= $escaper->escapeJs($generateAjaxUrl) ?>';
+        window.isMpMageAIEnabled = '<?= $escaper->escapeJs($isEnabled) ?>';
+    </script>
+    <script type="text/x-magento-init">
+        {
+            "#mp-prompt-generate-form": {
+                "mageAiGenerate": {}
+            }
+        }
+    </script>
+<?php endif ?>

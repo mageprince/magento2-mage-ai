@@ -1,0 +1,12 @@
+.mp-mageai-genereate-modal .modal-inner-wrap {
+    width: 700px !important;
+}
+
+.mp-mageai-genereate-modal .modal-footer {
+    text-align: left !important;
+    padding-top: 0 !important;
+}
+
+.mp-mageai-genereate-modal .modal-content {
+    padding-bottom: 0 !important;
+}

@@ -87,8 +87,16 @@ class Editor extends \Magento\Framework\Data\Form\Element\Editor
         if ($isEnabled && in_array($this->getHtmlId(), self::ALLOWED_FIELDS_HTML_ID)) {
             $html .= $this->_getButtonHtml(
                 [
-                    'title' => $this->translate('Generate content with MageAI'),
-                    'class' => 'generate-mageai-short-content',
+                    'title' => $this->translate('Generate with MageAI'),
+                    'class' => 'generate-mageai-btn',
+                    'style' => $visible ? '' : 'display:none',
+                    'id' => $this->getHtmlId() . '_mageai',
+                ]
+            );
+            $html .= $this->_getButtonHtml(
+                [
+                    'title' => $this->translate('Advanced Generate with MageAI'),
+                    'class' => 'advanced-generate-mageai-btn',
                     'style' => $visible ? '' : 'display:none',
                     'id' => $this->getHtmlId() . '_mageai',
                 ]
