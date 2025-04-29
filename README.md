@@ -52,6 +52,9 @@ You’re very welcome to join in.
 4. Push to the branch: `git push origin feature/my-feature`
 5. Create a new Pull Request
 
+## Generate Descriptions with Custom Prompt
+![mageprince-mageai-final](https://github.com/user-attachments/assets/9fbdad1b-5d27-4dbb-a3ca-274f3036ba34)
+
 ## Generate Product Short Description
 ![short-description](https://github.com/user-attachments/assets/a88899fc-d70a-4138-9295-e79b4efd1308)
 
