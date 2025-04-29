@@ -4,8 +4,9 @@ This Magento 2 extension uses OpenAI’s GPT models (ChatGPT) to automatically g
 ❤️ The goal of this extension is to remain fully open-source and continuously expand by integrating every possible way to use AI with Magento 2. From writing content to helping customers, improving SEO, or automating tasks — the idea is to make Magento and AI work great together. I’m building it to be flexible and helpful for everyone, and I’d love for others to join in. If you’re into Magento or AI, your ideas and contributions are always welcome. Let’s create something awesome together!
 
 ## Features
-- Choose OpenAI model (gpt-4, gpt-3.5-turbo, text-davinci-003, etc.)
+- Generate product descriptions using your own custom prompt for full control and flexibility.
 - Customize prompt templates using %s (attribute) and %d (word count)
+- Choose OpenAI model (gpt-4, gpt-3.5-turbo, text-davinci-003, etc.)
 - Set target word count for short and full descriptions
 - Supports both:
     - text-davinci-003 (completion endpoint)
