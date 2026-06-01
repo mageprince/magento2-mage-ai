@@ -27,9 +27,13 @@
                 <enabled>1</enabled>
             </general>
             <api>
+                <provider>openai</provider>
                 <base_url>https://api.openai.com</base_url>
                 <api_secret backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
-                <model>gpt-3.5-turbo</model>
+                <model>gpt-4o-mini</model>
+                <anthropic_base_url>https://api.anthropic.com</anthropic_base_url>
+                <anthropic_api_secret backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
+                <anthropic_model>claude-sonnet-4-6</anthropic_model>
             </api>
             <product_description>
                 <attribute>name</attribute>

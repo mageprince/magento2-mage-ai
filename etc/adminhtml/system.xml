@@ -39,18 +39,57 @@
             </group>
             <group id="api" translate="label" type="text" sortOrder="20" showInDefault="1">
                 <label>API Configuration</label>
-                <field id="base_url" translate="label" type="text" sortOrder="10" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                <field id="provider" translate="label" type="select" sortOrder="10" showInDefault="1" canRestore="1">
+                    <label>AI Provider</label>
+                    <source_model>Mageprince\MageAI\Model\Config\Source\AIProvider</source_model>
+                </field>
+                <!-- OpenAI fields -->
+                <field id="base_url" translate="label" type="text" sortOrder="20" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
                     <label>Base URL</label>
+                    <comment>Use a custom OpenAI-compatible endpoint (e.g. a proxy). Leave default for api.openai.com.</comment>
+                    <depends>
+                        <field id="provider">openai</field>
+                    </depends>
                 </field>
-                <field id="api_secret" translate="label" type="obscure" sortOrder="20" showInDefault="1">
-                    <label>API Secret</label>
+                <field id="api_secret" translate="label" type="obscure" sortOrder="30" showInDefault="1">
+                    <label>API Key</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                    <comment><![CDATA[Generate API key from <a href="https://platform.openai.com/account/api-keys">here</a>]]></comment>
+                    <comment><![CDATA[Generate API key from <a href="https://platform.openai.com/account/api-keys" target="_blank">platform.openai.com</a>]]></comment>
+                    <depends>
+                        <field id="provider">openai</field>
+                    </depends>
                 </field>
-                <field id="model" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                <field id="model" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Model</label>
-                    <comment><![CDATA[Check <a href="https://platform.openai.com/docs/models/model-endpoint-compatibility" target="_blank">Models</a> for more details]]></comment>
+                    <comment><![CDATA[Check <a href="https://platform.openai.com/docs/models" target="_blank">OpenAI Models</a> for details]]></comment>
                     <source_model>Mageprince\MageAI\Model\Config\Source\AIModel</source_model>
+                    <depends>
+                        <field id="provider">openai</field>
+                    </depends>
+                </field>
+                <!-- Anthropic (Claude) fields -->
+                <field id="anthropic_base_url" translate="label" type="text" sortOrder="50" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                    <label>Base URL</label>
+                    <comment>Use a custom Anthropic-compatible endpoint. Leave default for api.anthropic.com.</comment>
+                    <depends>
+                        <field id="provider">anthropic</field>
+                    </depends>
+                </field>
+                <field id="anthropic_api_secret" translate="label" type="obscure" sortOrder="60" showInDefault="1">
+                    <label>API Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment><![CDATA[Generate API key from <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a>]]></comment>
+                    <depends>
+                        <field id="provider">anthropic</field>
+                    </depends>
+                </field>
+                <field id="anthropic_model" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Model</label>
+                    <comment><![CDATA[Check <a href="https://docs.anthropic.com/en/docs/about-claude/models" target="_blank">Anthropic Models</a> for details]]></comment>
+                    <source_model>Mageprince\MageAI\Model\Config\Source\AnthropicModel</source_model>
+                    <depends>
+                        <field id="provider">anthropic</field>
+                    </depends>
                 </field>
             </group>
             <group id="product_description" translate="label" type="text" sortOrder="30" showInDefault="1">

@@ -29,6 +29,10 @@ use Mageprince\MageAI\Helper\Data as HelperData;
 
 class Completions
 {
+    private const ANTHROPIC_VERSION = '2023-06-01';
+    private const ANTHROPIC_DEFAULT_MAX_TOKENS = 2048;
+    private const SYSTEM_PROMPT = 'You are a helpful assistant. Provide only the main generated content without any greetings, introductions, or explanations. Never wrap output in markdown code blocks or backticks.';
+
     /**
      * @var Curl
      */
@@ -49,181 +53,66 @@ class Completions
      * @param Json $json
      * @param HelperData $helper
      */
-    public function __construct(
-        Curl $curl,
-        Json $json,
-        HelperData $helper
-    ) {
+    public function __construct(Curl $curl, Json $json, HelperData $helper)
+    {
         $this->curl = $curl;
         $this->helper = $helper;
         $this->json = $json;
     }
 
     /**
-     * Get curl object
-     *
-     * @return Curl
-     */
-    private function getCurlClient()
-    {
-        return $this->curl;
-    }
-
-    /**
-     * Set API header
-     *
-     * @return void
-     * @throws QueryException
-     */
-    private function setHeaders()
-    {
-        $token = $this->helper->getApiSecret();
-        if (!$token) {
-            throw new QueryException(__('API Secret not found. Please check configuration'));
-        }
-        $headers = [
-            'Content-Type' => 'application/json',
-            'Authorization' => 'Bearer ' . $token,
-        ];
-        $this->getCurlClient()->setHeaders($headers);
-    }
-
-    /**
-     * Make API request
-     *
-     * @param string $payload
-     * @return string
-     * @throws QueryException
-     */
-    protected function makeRequest($payload)
-    {
-        $this->setHeaders();
-        $baseUrl = $this->helper->getApiBaseUrl();
-        $model = $this->helper->getModel();
-        if (strpos($model, 'gpt') !== false) {
-            $endpoint = '/v1/chat/completions';
-        } else {
-            $endpoint = '/v1/completions';
-        }
-        $this->getCurlClient()->post(
-            $baseUrl . $endpoint,
-            $payload
-        );
-        return $this->validateResponse();
-    }
-
-    /**
-     * Retrieve API payload
-     *
-     * @param string $prompt
-     * @param int $maxToken
-     * @return string
-     */
-    protected function getPayload($prompt, $maxToken = false)
-    {
-        $model = $this->helper->getModel();
-        $payload =  [
-            'model' => $model,
-            'n' => 1,
-            'temperature' => 0.5,
-            'frequency_penalty' => 0,
-            'presence_penalty' => 0,
-        ];
-
-        if ($maxToken) {
-            $payload['max_tokens'] = $maxToken;
-        }
-
-        if (strpos($model, 'gpt') !== false) {
-            $payload['messages'] = [
-                [
-                    'role' => 'system',
-                    'content' => 'You are a helpful assistant. Provide only the main generated content without any greetings, introductions, or explanations.'
-                ],
-                [
-                    'role' => 'user',
-                    'content' => $prompt
-                ]
-            ];
-        } else {
-            $payload['prompt'] = $prompt;
-        }
-
-        return $this->json->serialize($payload);
-    }
-
-    /**
-     * Verify API response
-     *
-     * @return string string
-     * @throws QueryException
-     */
-    public function validateResponse()
-    {
-        if ($this->getCurlClient()->getStatus() == 401) {
-            throw new QueryException(__('Unauthorized response. Please check token.'));
-        }
-
-        if ($this->getCurlClient()->getStatus() >= 500) {
-            throw new QueryException(__('Server error'));
-        }
-
-        $response = $this->json->unserialize($this->getCurlClient()->getBody());
-
-        if (isset($response['error'])) {
-            throw new QueryException(__($response['error']['message'] ?? 'Unknown Error'));
-        }
-
-        if (!isset($response['choices'])) {
-            throw new QueryException(__('No results found from API response'));
-        }
-
-        $content = '';
-        if (isset($response['choices'][0]['text'])) {
-            $content = $response['choices'][0]['text'];
-        } elseif (isset($response['choices'][0]['message']['content'])) {
-            $content = $response['choices'][0]['message']['content'];
-        }
-
-        return trim($content);
-    }
-
-    /**
-     * Generate product description based on type
+     * Generate product description content via the configured AI provider
      *
      * @param ProductInterface $product
-     * @param string $type
+     * @param string $type  'short' or 'full'
      * @return string
      * @throws QueryException
      */
-    public function generateProductDescription($product, $type)
+    public function generateProductDescription(ProductInterface $product, string $type): string
     {
-        $payload = $this->getProductDescriptionPayload($product, $type);
-        return $this->makeRequest($payload);
+        $prompt = $this->buildProductDescriptionPrompt($product, $type);
+        $maxToken = $this->helper->getMaxToken($type);
+        return $this->generate($prompt, $maxToken);
     }
 
     /**
-     * Generate content with custom prompt
+     * Generate content from a free-form custom prompt
      *
      * @param string $prompt
      * @return string
      * @throws QueryException
      */
-    public function generateCustomContent($prompt)
+    public function generateCustomContent(string $prompt): string
     {
-        $payload = $this->getPayload($prompt);
-        return $this->makeRequest($payload);
+        return $this->generate($prompt);
     }
+
     /**
-     * Retrieve product description payload
+     * Dispatch to the configured provider
+     *
+     * @param string $prompt
+     * @param int|false $maxToken
+     * @return string
+     * @throws QueryException
+     */
+    protected function generate(string $prompt, $maxToken = false): string
+    {
+        if ($this->helper->getProvider() === 'anthropic') {
+            return $this->makeAnthropicRequest($this->getAnthropicPayload($prompt, $maxToken));
+        }
+        return $this->makeOpenAIRequest($this->getOpenAIPayload($prompt, $maxToken));
+    }
+
+    /**
+     * Build the prompt string for product description generation
      *
      * @param ProductInterface $product
      * @param string $type
      * @return string
      */
-    public function getProductDescriptionPayload($product, $type)
+    protected function buildProductDescriptionPrompt(ProductInterface $product, string $type): string
     {
-        if ($type == 'short') {
+        if ($type === 'short') {
             $prompt = $this->helper->getShortDescriptionPrompt();
             $wordCount = $this->helper->getShortDescriptionWordCount();
         } else {
@@ -237,14 +126,213 @@ class Completions
         $attributeLabel = $productAttribute->getDefaultFrontendLabel();
         $attributeValue = $productAttribute->getFrontend()->getValue($product);
 
-        $formattedPrompt = sprintf(
-            $prompt,
-            $wordCount,
-            $attributeLabel,
-            $attributeValue
-        );
+        return sprintf($prompt, $wordCount, $attributeLabel, $attributeValue);
+    }
 
-        $maxToken = $this->helper->getMaxToken($type);
-        return $this->getPayload($formattedPrompt, $maxToken);
+    // -------------------------------------------------------------------------
+    // OpenAI
+    // -------------------------------------------------------------------------
+
+    /**
+     * Set OpenAI request headers
+     *
+     * @return void
+     * @throws QueryException
+     */
+    protected function setOpenAIHeaders(): void
+    {
+        $token = $this->helper->getApiSecret();
+        if (!$token) {
+            throw new QueryException(__('OpenAI API Key not found. Please check configuration.'));
+        }
+        $this->curl->setHeaders([
+            'Content-Type'  => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ]);
+    }
+
+    /**
+     * Build OpenAI API payload
+     *
+     * @param string $prompt
+     * @param int|false $maxToken
+     * @return string
+     */
+    protected function getOpenAIPayload(string $prompt, $maxToken = false): string
+    {
+        $model = $this->helper->getModel();
+        $payload = [
+            'model'             => $model,
+            'n'                 => 1,
+            'temperature'       => 0.5,
+            'frequency_penalty' => 0,
+            'presence_penalty'  => 0,
+        ];
+
+        if ($maxToken) {
+            $payload['max_tokens'] = $maxToken;
+        }
+
+        if (strpos($model, 'gpt') !== false) {
+            $payload['messages'] = [
+                ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
+                ['role' => 'user',   'content' => $prompt],
+            ];
+        } else {
+            $payload['prompt'] = $prompt;
+        }
+
+        return $this->json->serialize($payload);
+    }
+
+    /**
+     * Execute OpenAI API request and return generated text
+     *
+     * @param string $payload
+     * @return string
+     * @throws QueryException
+     */
+    protected function makeOpenAIRequest(string $payload): string
+    {
+        $this->setOpenAIHeaders();
+        $model = $this->helper->getModel();
+        $endpoint = strpos($model, 'gpt') !== false ? '/v1/chat/completions' : '/v1/completions';
+        $this->curl->post($this->helper->getApiBaseUrl() . $endpoint, $payload);
+        return $this->validateOpenAIResponse();
+    }
+
+    /**
+     * Parse and validate OpenAI API response
+     *
+     * @return string
+     * @throws QueryException
+     */
+    protected function validateOpenAIResponse(): string
+    {
+        $status = $this->curl->getStatus();
+
+        if ($status == 401) {
+            throw new QueryException(__('Unauthorized response. Please check OpenAI API key.'));
+        }
+        if ($status >= 500) {
+            throw new QueryException(__('OpenAI server error.'));
+        }
+
+        $response = $this->json->unserialize($this->curl->getBody());
+
+        if (isset($response['error'])) {
+            throw new QueryException(__($response['error']['message'] ?? 'Unknown OpenAI API error.'));
+        }
+        if (!isset($response['choices'])) {
+            throw new QueryException(__('No results found from OpenAI API response.'));
+        }
+
+        $content = $response['choices'][0]['text'] ?? $response['choices'][0]['message']['content'] ?? '';
+        return trim($content);
+    }
+
+    // -------------------------------------------------------------------------
+    // Anthropic (Claude)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Set Anthropic request headers
+     *
+     * @return void
+     * @throws QueryException
+     */
+    protected function setAnthropicHeaders(): void
+    {
+        $token = $this->helper->getAnthropicApiSecret();
+        if (!$token) {
+            throw new QueryException(__('Anthropic API Key not found. Please check configuration.'));
+        }
+        $this->curl->setHeaders([
+            'Content-Type'      => 'application/json',
+            'x-api-key'         => $token,
+            'anthropic-version' => self::ANTHROPIC_VERSION,
+        ]);
+    }
+
+    /**
+     * Build Anthropic Messages API payload
+     *
+     * @param string $prompt
+     * @param int|false $maxToken
+     * @return string
+     */
+    protected function getAnthropicPayload(string $prompt, $maxToken = false): string
+    {
+        $payload = [
+            'model'      => $this->helper->getAnthropicModel(),
+            'max_tokens' => $maxToken ?: self::ANTHROPIC_DEFAULT_MAX_TOKENS,
+            'system'     => self::SYSTEM_PROMPT,
+            'messages'   => [
+                ['role' => 'user', 'content' => $prompt],
+            ],
+        ];
+        return $this->json->serialize($payload);
+    }
+
+    /**
+     * Execute Anthropic Messages API request and return generated text
+     *
+     * @param string $payload
+     * @return string
+     * @throws QueryException
+     */
+    protected function makeAnthropicRequest(string $payload): string
+    {
+        $this->setAnthropicHeaders();
+        $this->curl->post($this->helper->getAnthropicBaseUrl() . '/v1/messages', $payload);
+        return $this->validateAnthropicResponse();
+    }
+
+    /**
+     * Parse and validate Anthropic API response
+     *
+     * @return string
+     * @throws QueryException
+     */
+    protected function validateAnthropicResponse(): string
+    {
+        $status = $this->curl->getStatus();
+
+        if ($status == 401) {
+            throw new QueryException(__('Unauthorized response. Please check Anthropic API key.'));
+        }
+        if ($status >= 500) {
+            throw new QueryException(__('Anthropic server error.'));
+        }
+
+        $response = $this->json->unserialize($this->curl->getBody());
+
+        if (isset($response['error'])) {
+            throw new QueryException(__($response['error']['message'] ?? 'Unknown Anthropic API error.'));
+        }
+        if (empty($response['content'][0]['text'])) {
+            throw new QueryException(__('No results found from Anthropic API response.'));
+        }
+
+        return $this->stripCodeFences($response['content'][0]['text']);
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Strip markdown code fences that some models add despite being told not to.
+     * Handles ```html, ```xml, ``` and similar variants.
+     *
+     * @param string $content
+     * @return string
+     */
+    private function stripCodeFences(string $content): string
+    {
+        $content = trim($content);
+        $content = preg_replace('/^```[a-z]*\r?\n?/i', '', $content);
+        $content = preg_replace('/\r?\n?```\s*$/i', '', $content);
+        return trim($content);
     }
 }

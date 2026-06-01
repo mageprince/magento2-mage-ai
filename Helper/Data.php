@@ -25,13 +25,14 @@ use Magento\Framework\App\Helper\AbstractHelper;
 
 class Data extends AbstractHelper
 {
-    /**
-     * Config XML paths
-     */
     public const XML_PATH_IS_ENABLED = 'mageai/general/enabled';
+    public const XML_PATH_PROVIDER = 'mageai/api/provider';
     public const XML_PATH_API_BASE_URL = 'mageai/api/base_url';
     public const XML_PATH_API_KEY = 'mageai/api/api_secret';
     public const XML_PATH_API_MODEL = 'mageai/api/model';
+    public const XML_PATH_ANTHROPIC_BASE_URL = 'mageai/api/anthropic_base_url';
+    public const XML_PATH_ANTHROPIC_API_KEY = 'mageai/api/anthropic_api_secret';
+    public const XML_PATH_ANTHROPIC_MODEL = 'mageai/api/anthropic_model';
     public const XML_PATH_PRODUCT_ATTRIBUTE = 'mageai/product_description/attribute';
     public const XML_PATH_DESCRIPTION_PROMPT = 'mageai/product_description/description_prompt';
     public const XML_PATH_DESCRIPTION_WORD_COUNT = 'mageai/product_description/description_words_count';
@@ -50,7 +51,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Check is extension is enabled
+     * Check if extension is enabled
      *
      * @return bool
      */
@@ -60,7 +61,17 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get API base url
+     * Get selected AI provider
+     *
+     * @return string  'openai' or 'anthropic'
+     */
+    public function getProvider()
+    {
+        return (string) $this->getConfig(self::XML_PATH_PROVIDER) ?: 'openai';
+    }
+
+    /**
+     * Get OpenAI API base URL
      *
      * @return string
      */
@@ -70,13 +81,53 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get API secret
+     * Get OpenAI API secret
      *
      * @return string
      */
     public function getApiSecret()
     {
         return $this->getConfig(self::XML_PATH_API_KEY);
+    }
+
+    /**
+     * Get OpenAI model
+     *
+     * @return string
+     */
+    public function getModel()
+    {
+        return $this->getConfig(self::XML_PATH_API_MODEL);
+    }
+
+    /**
+     * Get Anthropic API base URL
+     *
+     * @return string
+     */
+    public function getAnthropicBaseUrl()
+    {
+        return $this->getConfig(self::XML_PATH_ANTHROPIC_BASE_URL);
+    }
+
+    /**
+     * Get Anthropic API secret
+     *
+     * @return string
+     */
+    public function getAnthropicApiSecret()
+    {
+        return $this->getConfig(self::XML_PATH_ANTHROPIC_API_KEY);
+    }
+
+    /**
+     * Get Anthropic model
+     *
+     * @return string
+     */
+    public function getAnthropicModel()
+    {
+        return $this->getConfig(self::XML_PATH_ANTHROPIC_MODEL);
     }
 
     /**
@@ -120,7 +171,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get max token
+     * Get max token count for a description type
      *
      * @param string $type
      * @return float
@@ -133,16 +184,6 @@ class Data extends AbstractHelper
             $wordCount = $this->getDescriptionWordCount();
         }
         return round($wordCount * 1.5);
-    }
-
-    /**
-     * Get api model
-     *
-     * @return string
-     */
-    public function getModel()
-    {
-        return $this->getConfig(self::XML_PATH_API_MODEL);
     }
 
     /**
