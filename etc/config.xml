@@ -41,8 +41,8 @@
             <product_description>
                 <temperature>0.5</temperature>
                 <attribute>name</attribute>
-                <description_max_tokens>2048</description_max_tokens>
-                <short_description_max_tokens>1024</short_description_max_tokens>
+                <description_max_tokens>4000</description_max_tokens>
+                <short_description_max_tokens>3000</short_description_max_tokens>
                 <description_prompt><![CDATA[You are generating a SEO-friendly product full description in HTML format for an e-commerce store. Write a clear and natural HTML full description based on product name {{ product.name }} and {{ product.attributes }}
 Follow these guidelines:
 - Write a description between 300 and 500 characters. Count characters based on visible text only, excluding HTML tags.

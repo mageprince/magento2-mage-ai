@@ -15,10 +15,9 @@ define([
         },
 
         /**
-         * Opens a modal popup for advanced generation functionality. The modal contains
-         * a button that triggers content generation using MageAI.
+         * Opens a modal popup for advanced generation functionality.
          *
-         * @param {string} targetField
+         * @param {HTMLElement} targetField
          */
         clickAdvancedGenerateButton: function (targetField) {
             var self = this;
@@ -36,21 +35,21 @@ define([
                 }]
             };
 
-            var popup = modal(modalOptions, $(this.options.advancedGenerateModalSelector));
+            modal(modalOptions, $(this.options.advancedGenerateModalSelector));
             $(this.options.advancedGenerateModalSelector).modal('openModal');
         },
 
         /**
-         * Handles the click event for the prompt generation button.
+         * Handles the click event for the custom prompt generate button.
          *
-         * @param {string} targetField
+         * @param {HTMLElement} targetField
          */
         promptGenerateButtonClick: function (targetField) {
             var self = this;
             var customPrompt = $(this.options.promptGenerateTextAreaSelector).val().trim();
-            var validPrompt = mageAI.validateCustomPrompt(customPrompt);
-            if (validPrompt) {
-                this.generateContent(false, false, customPrompt)
+
+            if (mageAI.validateCustomPrompt(customPrompt)) {
+                this.generateContent({}, false, customPrompt)
                     .done(function (content) {
                         if (content) {
                             self.updateDescription(content, targetField);
@@ -63,29 +62,93 @@ define([
         },
 
         /**
-         * Updates the description field based on the specified content and target field.
+         * Collects current product attribute values from the form DOM.
+         * Reads display values (option labels for selects) so no server-side
+         * option ID resolution is needed. Skips attributes whose form fields
+         * are not present on the page (not in the attribute set, etc.).
          *
-         * This method determines if the current field is part of the "Page Builder"
-         * or a regular form and updates the appropriate description fields accordingly.
+         * @returns {Object} map of attributeCode → display value
+         */
+        collectAttributeData: function () {
+            var data = {};
+            var attributes = window.mpMageAIAttributes || [];
+
+            $.each(attributes, function (i, code) {
+                var value = mageAI.getAttributeFormValue(code);
+                if (value !== null && value !== '') {
+                    data[code] = value;
+                }
+            });
+
+            return data;
+        },
+
+        /**
+         * Reads the display value for a single product attribute from the form.
+         * Returns null if the field is not present (attribute not in attribute set).
+         *
+         * @param {string} code  Attribute code
+         * @returns {string|null}
+         */
+        getAttributeFormValue: function (code) {
+            // WYSIWYG fields (e.g. description) — use TinyMCE API when available
+            if (typeof tinymce !== 'undefined') {
+                var editor = tinymce.get('product_form_' + code);
+                if (editor) {
+                    var text = $('<div>').html(editor.getContent()).text().trim();
+                    return text || null;
+                }
+            }
+
+            // Standard field: input, textarea, select
+            var $field = $('[name="product[' + code + ']"]');
+
+            // Multiselect uses array syntax: product[code][]
+            if (!$field.length) {
+                $field = $('[name="product[' + code + '][]"]');
+            }
+
+            if (!$field.length) {
+                return null;
+            }
+
+            if ($field.is('select[multiple]')) {
+                var labels = [];
+                $field.find('option:selected').each(function () {
+                    var label = $.trim($(this).text());
+                    if (label) {
+                        labels.push(label);
+                    }
+                });
+                return labels.length ? labels.join(', ') : null;
+            }
+
+            if ($field.is('select')) {
+                var selected = $field.find('option:selected').text().trim();
+                return selected || null;
+            }
+
+            var val = $field.val();
+            return (val !== null && String(val).trim() !== '') ? String(val).trim() : null;
+        },
+
+        /**
+         * Updates the description field with generated content.
+         * Handles both WYSIWYG and Page Builder targets.
          *
          * @param {string} content
          * @param {HTMLElement|string} targetField
          */
         updateDescription: function (content, targetField) {
-            var isPageBuilder = false;
-            if ($(targetField).parent().attr('id') == 'buttonspagebuilder_html_form_html') {
-                isPageBuilder = true;
-            }
+            var isPageBuilder = $(targetField).parent().attr('id') === 'buttonspagebuilder_html_form_html';
 
             if (isPageBuilder) {
-                var descriptionField = $(targetField).parents().next('textarea');
-                descriptionField.val(content).change();
+                $(targetField).parents().next('textarea').val(content).change();
             } else {
-                var descriptionField = $(targetField).parent().parent().find('iframe').contents().find('body');
-                console.log(descriptionField);
-                var textareaField = $(targetField).parent().parent().find('textarea');
-                descriptionField.html(content).change();
-                textareaField.val(content).change();
+                var $iframe = $(targetField).parent().parent().find('iframe');
+                var $textarea = $(targetField).parent().parent().find('textarea');
+                $iframe.contents().find('body').html(content).change();
+                $textarea.val(content).change();
             }
         },
 
@@ -107,26 +170,28 @@ define([
         },
 
         /**
-         * Perform AJAX request to generate content.
-         * Sends SKU, type, or custom prompt to server and updates UI with response.
-         * @param {string|false} sku - Product SKU or false if not applicable
-         * @param {string|false} type - Description type ('short' or 'full') or false
-         * @param {string|false} prompt - Custom prompt text or false
+         * Performs the AJAX request to the generate controller.
+         *
+         * @param {Object}        attributeData  Product attribute values from the form ({} for custom prompts)
+         * @param {string|false}  type           'short', 'full', or false for custom prompts
+         * @param {string|false}  prompt         Custom prompt text, or false for attribute-based generation
+         * @returns {jQuery.Deferred}
          */
-        generateContent: function (sku, type, prompt) {
+        generateContent: function (attributeData, type, prompt) {
             var self = this;
             var deferred = $.Deferred();
+
             $.ajax({
                 url: window.mageAIAjaxUrl,
                 type: 'POST',
                 showLoader: true,
                 data: {
                     'form_key': FORM_KEY,
-                    'sku': sku,
+                    'attribute_data': attributeData || {},
                     'type': type,
                     'custom_prompt': prompt
                 },
-                success: function(response) {
+                success: function (response) {
                     if (response.error == false) {
                         deferred.resolve(response.data);
                     } else {
@@ -136,12 +201,14 @@ define([
                         });
                         deferred.resolve(false);
                     }
+
                     if (prompt) {
                         $(self.options.advancedGenerateModalSelector).modal('closeModal');
                     }
+
                     return false;
                 },
-                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
                     console.log(errorThrown);
                     deferred.reject(errorThrown);
                 }

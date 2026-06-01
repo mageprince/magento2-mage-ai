@@ -10,3 +10,8 @@
 .mp-mageai-genereate-modal .modal-content {
     padding-bottom: 0 !important;
 }
+
+.loading-mask {
+    z-index: 9999 !important;
+}
+
