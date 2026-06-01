@@ -39,11 +39,33 @@
                 <gemini_model>gemini-2.5-flash</gemini_model>
             </api>
             <product_description>
+                <temperature>0.5</temperature>
                 <attribute>name</attribute>
-                <description_prompt><![CDATA[Write a product description (~%d words) for product %s: "%s". Use only HTML body content, no head or body tags.]]></description_prompt>
-                <description_words_count>600</description_words_count>
-                <short_description_prompt><![CDATA[Write a short product description (~%d words) for product %s: "%s". Use only HTML body content, no head or body tags.]]></short_description_prompt>
-                <short_description_words_count>100</short_description_words_count>
+                <description_max_tokens>2048</description_max_tokens>
+                <short_description_max_tokens>1024</short_description_max_tokens>
+                <description_prompt><![CDATA[You are generating a SEO-friendly product full description in HTML format for an e-commerce store. Write a clear and natural HTML full description based on product name {{ product.name }} and {{ product.attributes }}
+Follow these guidelines:
+- Write a description between 300 and 500 characters. Count characters based on visible text only, excluding HTML tags.
+- Use clear, natural language suitable for online shoppers.
+- Incorporate relevant product attributes naturally.
+- Use well-structured HTML, such as paragraphs or bullet points, for readability.
+- Avoid marketing hype, exaggerated claims, emojis.
+- Do not add exclamation marks yourself. If the product name or attribute value already contains exclamation marks, keep it as it is.
+- Do not repeat the product name unnecessarily.
+- Do not use markdown, triple backticks, or code blocks.
+- Output a single final result; do not suggest variants.
+- Return only the raw HTML description without extra text.]]></description_prompt>
+                <short_description_prompt><![CDATA[You are generating a SEO-friendly product short description in HTML format for an e-commerce store. Write a clear and natural HTML short description based on product name {{ product.name }} and {{ product.attributes }}
+Follow these guidelines:
+- Write a description between 100 and 250 characters. Count characters based on visible text only, excluding HTML tags.
+- Use clear, natural language suitable for online shoppers.
+- Incorporate relevant product attributes naturally.
+- Avoid marketing hype, exaggerated claims, emojis.
+- Do not add exclamation marks yourself. If the product name or attribute value already contains exclamation marks, keep it as it is.
+- Mention the product name no more than 3 times in the whole short description.
+- Do not use markdown, triple backticks, or code blocks.
+- Output a single final result; do not suggest variants.
+- Return only the raw HTML description without extra text. Do not use any HTML tags.]]></short_description_prompt>
             </product_description>
         </mageai>
     </default>

@@ -50,8 +50,12 @@ class Attributes implements OptionSourceInterface
         $attributes = [];
         $attributeCollection = $this->collectionFactory->create();
         foreach ($attributeCollection->getItems() as $attribute) {
-            $attributes[$attribute->getAttributeCode()] = $attribute->getFrontendLabel();
+            $label = $attribute->getFrontendLabel();
+            if ($label) {
+                $attributes[$attribute->getAttributeCode()] = $label;
+            }
         }
+        asort($attributes);
         return $attributes;
     }
 

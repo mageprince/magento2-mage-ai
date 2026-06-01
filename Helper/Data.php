@@ -37,10 +37,11 @@ class Data extends AbstractHelper
     public const XML_PATH_GEMINI_API_KEY = 'mageai/api/gemini_api_secret';
     public const XML_PATH_GEMINI_MODEL = 'mageai/api/gemini_model';
     public const XML_PATH_PRODUCT_ATTRIBUTE = 'mageai/product_description/attribute';
+    public const XML_PATH_TEMPERATURE = 'mageai/product_description/temperature';
     public const XML_PATH_DESCRIPTION_PROMPT = 'mageai/product_description/description_prompt';
-    public const XML_PATH_DESCRIPTION_WORD_COUNT = 'mageai/product_description/description_words_count';
+    public const XML_PATH_DESCRIPTION_MAX_TOKENS = 'mageai/product_description/description_max_tokens';
     public const XML_PATH_SHORT_SHORT_DESCRIPTION_PROMPT = 'mageai/product_description/short_description_prompt';
-    public const XML_PATH_SHORT_DESCRIPTION_WORD_COUNT = 'mageai/product_description/short_description_words_count';
+    public const XML_PATH_SHORT_DESCRIPTION_MAX_TOKENS = 'mageai/product_description/short_description_max_tokens';
 
     /**
      * Get config value
@@ -174,16 +175,6 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get number of description words
-     *
-     * @return int
-     */
-    public function getDescriptionWordCount()
-    {
-        return (int) $this->getConfig(self::XML_PATH_DESCRIPTION_WORD_COUNT);
-    }
-
-    /**
      * Get short description prompt
      *
      * @return string
@@ -194,38 +185,37 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get number of short description words
+     * Get sampling temperature
      *
-     * @return int
-     */
-    public function getShortDescriptionWordCount()
-    {
-        return (int) $this->getConfig(self::XML_PATH_SHORT_DESCRIPTION_WORD_COUNT);
-    }
-
-    /**
-     * Get max token count for a description type
-     *
-     * @param string $type
      * @return float
      */
-    public function getMaxToken($type)
+    public function getTemperature(): float
     {
-        if ($type == 'short') {
-            $wordCount = $this->getShortDescriptionWordCount();
-        } else {
-            $wordCount = $this->getDescriptionWordCount();
-        }
-        return round($wordCount * 1.5);
+        return (float) ($this->getConfig(self::XML_PATH_TEMPERATURE) ?? 0.5);
     }
 
     /**
-     * Get product attribute code
+     * Get max tokens for a description type
      *
-     * @return mixed
+     * @param string $type  'short' or 'full'
+     * @return int
      */
-    public function getProductAttribute()
+    public function getMaxTokens(string $type): int
     {
-        return $this->getConfig(self::XML_PATH_PRODUCT_ATTRIBUTE);
+        $path = $type === 'short'
+            ? self::XML_PATH_SHORT_DESCRIPTION_MAX_TOKENS
+            : self::XML_PATH_DESCRIPTION_MAX_TOKENS;
+        return (int) ($this->getConfig($path) ?: 2048);
+    }
+
+    /**
+     * Get selected product attribute codes as an array
+     *
+     * @return string[]
+     */
+    public function getProductAttributes(): array
+    {
+        $value = (string) $this->getConfig(self::XML_PATH_PRODUCT_ATTRIBUTE);
+        return array_filter(array_map('trim', explode(',', $value)));
     }
 }

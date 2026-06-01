@@ -72,8 +72,7 @@ class Completions
     public function generateProductDescription(ProductInterface $product, string $type): string
     {
         $prompt = $this->buildProductDescriptionPrompt($product, $type);
-        $maxToken = $this->helper->getMaxToken($type);
-        return $this->generate($prompt, $maxToken);
+        return $this->generate($prompt, $this->helper->getMaxTokens($type));
     }
 
     /**
@@ -117,21 +116,38 @@ class Completions
      */
     protected function buildProductDescriptionPrompt(ProductInterface $product, string $type): string
     {
-        if ($type === 'short') {
-            $prompt = $this->helper->getShortDescriptionPrompt();
-            $wordCount = $this->helper->getShortDescriptionWordCount();
-        } else {
-            $prompt = $this->helper->getDescriptionPrompt();
-            $wordCount = $this->helper->getDescriptionWordCount();
+        $template = $type === 'short'
+            ? $this->helper->getShortDescriptionPrompt()
+            : $this->helper->getDescriptionPrompt();
+
+        $prompt = str_replace('{{ product.name }}', (string) $product->getName(), $template);
+        $prompt = str_replace('{{ product.attributes }}', $this->buildAttributesText($product), $prompt);
+
+        return $prompt;
+    }
+
+    /**
+     * Build a comma-separated "Label: Value" string from all selected product attributes
+     *
+     * @param ProductInterface $product
+     * @return string
+     */
+    protected function buildAttributesText(ProductInterface $product): string
+    {
+        $parts = [];
+        foreach ($this->helper->getProductAttributes() as $code) {
+            /** @var \Magento\Catalog\Model\ResourceModel\Eav\Attribute $attr */
+            $attr = $product->getResource()->getAttribute($code);
+            if (!$attr) {
+                continue;
+            }
+            $label = $attr->getDefaultFrontendLabel();
+            $value = $attr->getFrontend()->getValue($product);
+            if ($label && $value !== null && $value !== '' && $value !== false) {
+                $parts[] = $label . ': ' . $value;
+            }
         }
-
-        $attribute = $this->helper->getProductAttribute();
-        /** @var \Magento\Catalog\Model\ResourceModel\Eav\Attribute $productAttribute */
-        $productAttribute = $product->getResource()->getAttribute($attribute);
-        $attributeLabel = $productAttribute->getDefaultFrontendLabel();
-        $attributeValue = $productAttribute->getFrontend()->getValue($product);
-
-        return sprintf($prompt, $wordCount, $attributeLabel, $attributeValue);
+        return implode(', ', $parts);
     }
 
     // -------------------------------------------------------------------------
@@ -169,7 +185,7 @@ class Completions
         $payload = [
             'model'             => $model,
             'n'                 => 1,
-            'temperature'       => 0.5,
+            'temperature'       => $this->helper->getTemperature(),
             'frequency_penalty' => 0,
             'presence_penalty'  => 0,
         ];
@@ -269,10 +285,11 @@ class Completions
     protected function getAnthropicPayload(string $prompt, $maxToken = false): string
     {
         $payload = [
-            'model'      => $this->helper->getAnthropicModel(),
-            'max_tokens' => $maxToken ?: self::ANTHROPIC_DEFAULT_MAX_TOKENS,
-            'system'     => self::SYSTEM_PROMPT,
-            'messages'   => [
+            'model'       => $this->helper->getAnthropicModel(),
+            'max_tokens'  => $maxToken ?: self::ANTHROPIC_DEFAULT_MAX_TOKENS,
+            'temperature' => min(1.0, $this->helper->getTemperature()),
+            'system'      => self::SYSTEM_PROMPT,
+            'messages'    => [
                 ['role' => 'user', 'content' => $prompt],
             ],
         ];
@@ -361,7 +378,7 @@ class Completions
                 ['parts' => [['text' => $prompt]]],
             ],
             'generationConfig' => [
-                'temperature'     => 0.5,
+                'temperature'     => $this->helper->getTemperature(),
                 'maxOutputTokens' => $maxToken ?: self::GEMINI_DEFAULT_MAX_TOKENS,
             ],
         ];
