@@ -23,7 +23,7 @@ namespace Mageprince\MageAI\Model\Config\Source;
 
 use Magento\Framework\Data\OptionSourceInterface;
 
-class AIProvider implements OptionSourceInterface
+class GeminiModel implements OptionSourceInterface
 {
     /**
      * Options getter
@@ -33,9 +33,13 @@ class AIProvider implements OptionSourceInterface
     public function toOptionArray()
     {
         return [
-            ['value' => 'gemini', 'label' => __('Google (Gemini)')],
-            ['value' => 'openai', 'label' => __('OpenAI (ChatGPT)')],
-            ['value' => 'anthropic', 'label' => __('Anthropic (Claude)')],
+            ['value' => 'gemini-2.5-pro', 'label' => 'gemini-2.5-pro'],
+            ['value' => 'gemini-2.5-flash', 'label' => 'gemini-2.5-flash'],
+            ['value' => 'gemini-2.0-flash', 'label' => 'gemini-2.0-flash'],
+            ['value' => 'gemini-2.0-flash-lite', 'label' => 'gemini-2.0-flash-lite'],
+            ['value' => 'gemini-1.5-pro', 'label' => 'gemini-1.5-pro'],
+            ['value' => 'gemini-1.5-flash', 'label' => 'gemini-1.5-flash'],
+            ['value' => 'gemini-1.5-flash-8b', 'label' => 'gemini-1.5-flash-8b'],
         ];
     }
 }

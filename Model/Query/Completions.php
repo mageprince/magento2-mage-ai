@@ -31,6 +31,7 @@ class Completions
 {
     private const ANTHROPIC_VERSION = '2023-06-01';
     private const ANTHROPIC_DEFAULT_MAX_TOKENS = 2048;
+    private const GEMINI_DEFAULT_MAX_TOKENS = 2048;
     private const SYSTEM_PROMPT = 'You are a helpful assistant. Provide only the main generated content without any greetings, introductions, or explanations. Never wrap output in markdown code blocks or backticks.';
 
     /**
@@ -97,10 +98,14 @@ class Completions
      */
     protected function generate(string $prompt, $maxToken = false): string
     {
-        if ($this->helper->getProvider() === 'anthropic') {
-            return $this->makeAnthropicRequest($this->getAnthropicPayload($prompt, $maxToken));
+        switch ($this->helper->getProvider()) {
+            case 'anthropic':
+                return $this->makeAnthropicRequest($this->getAnthropicPayload($prompt, $maxToken));
+            case 'gemini':
+                return $this->makeGeminiRequest($this->getGeminiPayload($prompt, $maxToken));
+            default:
+                return $this->makeOpenAIRequest($this->getOpenAIPayload($prompt, $maxToken));
         }
-        return $this->makeOpenAIRequest($this->getOpenAIPayload($prompt, $maxToken));
     }
 
     /**
@@ -315,6 +320,104 @@ class Completions
         }
 
         return $this->stripCodeFences($response['content'][0]['text']);
+    }
+
+    // -------------------------------------------------------------------------
+    // Google Gemini
+    // -------------------------------------------------------------------------
+
+    /**
+     * Set Gemini request headers
+     *
+     * @return void
+     * @throws QueryException
+     */
+    protected function setGeminiHeaders(): void
+    {
+        $token = $this->helper->getGeminiApiSecret();
+        if (!$token) {
+            throw new QueryException(__('Gemini API Key not found. Please check configuration.'));
+        }
+        $this->curl->setHeaders([
+            'Content-Type'   => 'application/json',
+            'x-goog-api-key' => $token,
+        ]);
+    }
+
+    /**
+     * Build Gemini generateContent API payload
+     *
+     * @param string $prompt
+     * @param int|false $maxToken
+     * @return string
+     */
+    protected function getGeminiPayload(string $prompt, $maxToken = false): string
+    {
+        $payload = [
+            'system_instruction' => [
+                'parts' => [['text' => self::SYSTEM_PROMPT]],
+            ],
+            'contents' => [
+                ['parts' => [['text' => $prompt]]],
+            ],
+            'generationConfig' => [
+                'temperature'     => 0.5,
+                'maxOutputTokens' => $maxToken ?: self::GEMINI_DEFAULT_MAX_TOKENS,
+            ],
+        ];
+        return $this->json->serialize($payload);
+    }
+
+    /**
+     * Execute Gemini generateContent API request and return generated text
+     *
+     * @param string $payload
+     * @return string
+     * @throws QueryException
+     */
+    protected function makeGeminiRequest(string $payload): string
+    {
+        $this->setGeminiHeaders();
+        $model = $this->helper->getGeminiModel();
+        $url = $this->helper->getGeminiBaseUrl() . '/v1beta/models/' . $model . ':generateContent';
+        $this->curl->post($url, $payload);
+        return $this->validateGeminiResponse();
+    }
+
+    /**
+     * Parse and validate Gemini API response
+     *
+     * @return string
+     * @throws QueryException
+     */
+    protected function validateGeminiResponse(): string
+    {
+        $status = $this->curl->getStatus();
+
+        if ($status == 401 || $status == 403) {
+            throw new QueryException(__('Unauthorized response. Please check Gemini API key.'));
+        }
+        if ($status >= 500) {
+            throw new QueryException(__('Gemini server error.'));
+        }
+
+        $response = $this->json->unserialize($this->curl->getBody());
+
+        if (isset($response['error'])) {
+            throw new QueryException(__($response['error']['message'] ?? 'Unknown Gemini API error.'));
+        }
+
+        $finishReason = $response['candidates'][0]['finishReason'] ?? '';
+        if ($finishReason === 'SAFETY') {
+            throw new QueryException(__('Gemini blocked the response due to safety filters. Try adjusting the prompt.'));
+        }
+
+        $text = $response['candidates'][0]['content']['parts'][0]['text'] ?? '';
+        if ($text === '') {
+            throw new QueryException(__('No results found from Gemini API response.'));
+        }
+
+        return $this->stripCodeFences($text);
     }
 
     // -------------------------------------------------------------------------

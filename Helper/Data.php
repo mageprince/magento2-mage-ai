@@ -33,6 +33,9 @@ class Data extends AbstractHelper
     public const XML_PATH_ANTHROPIC_BASE_URL = 'mageai/api/anthropic_base_url';
     public const XML_PATH_ANTHROPIC_API_KEY = 'mageai/api/anthropic_api_secret';
     public const XML_PATH_ANTHROPIC_MODEL = 'mageai/api/anthropic_model';
+    public const XML_PATH_GEMINI_BASE_URL = 'mageai/api/gemini_base_url';
+    public const XML_PATH_GEMINI_API_KEY = 'mageai/api/gemini_api_secret';
+    public const XML_PATH_GEMINI_MODEL = 'mageai/api/gemini_model';
     public const XML_PATH_PRODUCT_ATTRIBUTE = 'mageai/product_description/attribute';
     public const XML_PATH_DESCRIPTION_PROMPT = 'mageai/product_description/description_prompt';
     public const XML_PATH_DESCRIPTION_WORD_COUNT = 'mageai/product_description/description_words_count';
@@ -128,6 +131,36 @@ class Data extends AbstractHelper
     public function getAnthropicModel()
     {
         return $this->getConfig(self::XML_PATH_ANTHROPIC_MODEL);
+    }
+
+    /**
+     * Get Gemini API base URL
+     *
+     * @return string
+     */
+    public function getGeminiBaseUrl()
+    {
+        return $this->getConfig(self::XML_PATH_GEMINI_BASE_URL);
+    }
+
+    /**
+     * Get Gemini API secret
+     *
+     * @return string
+     */
+    public function getGeminiApiSecret()
+    {
+        return $this->getConfig(self::XML_PATH_GEMINI_API_KEY);
+    }
+
+    /**
+     * Get Gemini model
+     *
+     * @return string
+     */
+    public function getGeminiModel()
+    {
+        return $this->getConfig(self::XML_PATH_GEMINI_MODEL);
     }
 
     /**
