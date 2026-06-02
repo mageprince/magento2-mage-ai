@@ -84,4 +84,5 @@ You're very welcome to join in.
 ![full-description-short](https://github.com/user-attachments/assets/54031479-5d68-4af9-9fc1-c24680e4a858)
 
 ### Admin Configuration
-![configuration](https://github.com/user-attachments/assets/98a9c802-93d6-4b80-b8b6-e5be375a6915)
+![admin-configuration](https://github.com/user-attachments/assets/0e2f654d-19e4-496f-8262-45558853fb22)
+
