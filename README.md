@@ -21,7 +21,7 @@ This Magento 2 extension integrates **OpenAI (GPT)**, **Anthropic (Claude)**, an
 | Provider | Models |
 |---|---|
 | **Google Gemini** *(default)* | `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-1.5-flash`, `gemini-1.5-pro` |
-| **OpenAI** | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4`, `gpt-3.5-turbo` |
+| **OpenAI (ChatGPT)** | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4`, `gpt-3.5-turbo` |
 | **Anthropic (Claude)** | `claude-opus-4-5`, `claude-sonnet-4-6`, `claude-haiku-4-5` |
 
 ## Usage
