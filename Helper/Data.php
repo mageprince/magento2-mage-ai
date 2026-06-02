@@ -25,18 +25,23 @@ use Magento\Framework\App\Helper\AbstractHelper;
 
 class Data extends AbstractHelper
 {
-    /**
-     * Config XML paths
-     */
     public const XML_PATH_IS_ENABLED = 'mageai/general/enabled';
+    public const XML_PATH_PROVIDER = 'mageai/api/provider';
     public const XML_PATH_API_BASE_URL = 'mageai/api/base_url';
     public const XML_PATH_API_KEY = 'mageai/api/api_secret';
     public const XML_PATH_API_MODEL = 'mageai/api/model';
+    public const XML_PATH_ANTHROPIC_BASE_URL = 'mageai/api/anthropic_base_url';
+    public const XML_PATH_ANTHROPIC_API_KEY = 'mageai/api/anthropic_api_secret';
+    public const XML_PATH_ANTHROPIC_MODEL = 'mageai/api/anthropic_model';
+    public const XML_PATH_GEMINI_BASE_URL = 'mageai/api/gemini_base_url';
+    public const XML_PATH_GEMINI_API_KEY = 'mageai/api/gemini_api_secret';
+    public const XML_PATH_GEMINI_MODEL = 'mageai/api/gemini_model';
     public const XML_PATH_PRODUCT_ATTRIBUTE = 'mageai/product_description/attribute';
+    public const XML_PATH_TEMPERATURE = 'mageai/product_description/temperature';
     public const XML_PATH_DESCRIPTION_PROMPT = 'mageai/product_description/description_prompt';
-    public const XML_PATH_DESCRIPTION_WORD_COUNT = 'mageai/product_description/description_words_count';
+    public const XML_PATH_DESCRIPTION_MAX_TOKENS = 'mageai/product_description/description_max_tokens';
     public const XML_PATH_SHORT_SHORT_DESCRIPTION_PROMPT = 'mageai/product_description/short_description_prompt';
-    public const XML_PATH_SHORT_DESCRIPTION_WORD_COUNT = 'mageai/product_description/short_description_words_count';
+    public const XML_PATH_SHORT_DESCRIPTION_MAX_TOKENS = 'mageai/product_description/short_description_max_tokens';
 
     /**
      * Get config value
@@ -50,7 +55,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Check is extension is enabled
+     * Check if extension is enabled
      *
      * @return bool
      */
@@ -60,7 +65,17 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get API base url
+     * Get selected AI provider
+     *
+     * @return string  'openai' or 'anthropic'
+     */
+    public function getProvider()
+    {
+        return (string) $this->getConfig(self::XML_PATH_PROVIDER) ?: 'openai';
+    }
+
+    /**
+     * Get OpenAI API base URL
      *
      * @return string
      */
@@ -70,13 +85,83 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get API secret
+     * Get OpenAI API secret
      *
      * @return string
      */
     public function getApiSecret()
     {
         return $this->getConfig(self::XML_PATH_API_KEY);
+    }
+
+    /**
+     * Get OpenAI model
+     *
+     * @return string
+     */
+    public function getModel()
+    {
+        return $this->getConfig(self::XML_PATH_API_MODEL);
+    }
+
+    /**
+     * Get Anthropic API base URL
+     *
+     * @return string
+     */
+    public function getAnthropicBaseUrl()
+    {
+        return $this->getConfig(self::XML_PATH_ANTHROPIC_BASE_URL);
+    }
+
+    /**
+     * Get Anthropic API secret
+     *
+     * @return string
+     */
+    public function getAnthropicApiSecret()
+    {
+        return $this->getConfig(self::XML_PATH_ANTHROPIC_API_KEY);
+    }
+
+    /**
+     * Get Anthropic model
+     *
+     * @return string
+     */
+    public function getAnthropicModel()
+    {
+        return $this->getConfig(self::XML_PATH_ANTHROPIC_MODEL);
+    }
+
+    /**
+     * Get Gemini API base URL
+     *
+     * @return string
+     */
+    public function getGeminiBaseUrl()
+    {
+        return $this->getConfig(self::XML_PATH_GEMINI_BASE_URL);
+    }
+
+    /**
+     * Get Gemini API secret
+     *
+     * @return string
+     */
+    public function getGeminiApiSecret()
+    {
+        return $this->getConfig(self::XML_PATH_GEMINI_API_KEY);
+    }
+
+    /**
+     * Get Gemini model
+     *
+     * @return string
+     */
+    public function getGeminiModel()
+    {
+        return $this->getConfig(self::XML_PATH_GEMINI_MODEL);
     }
 
     /**
@@ -90,16 +175,6 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get number of description words
-     *
-     * @return int
-     */
-    public function getDescriptionWordCount()
-    {
-        return (int) $this->getConfig(self::XML_PATH_DESCRIPTION_WORD_COUNT);
-    }
-
-    /**
      * Get short description prompt
      *
      * @return string
@@ -110,48 +185,37 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get number of short description words
+     * Get sampling temperature
      *
-     * @return int
-     */
-    public function getShortDescriptionWordCount()
-    {
-        return (int) $this->getConfig(self::XML_PATH_SHORT_DESCRIPTION_WORD_COUNT);
-    }
-
-    /**
-     * Get max token
-     *
-     * @param string $type
      * @return float
      */
-    public function getMaxToken($type)
+    public function getTemperature(): float
     {
-        if ($type == 'short') {
-            $wordCount = $this->getShortDescriptionWordCount();
-        } else {
-            $wordCount = $this->getDescriptionWordCount();
-        }
-        return round($wordCount * 1.5);
+        return (float) ($this->getConfig(self::XML_PATH_TEMPERATURE) ?? 0.5);
     }
 
     /**
-     * Get api model
+     * Get max tokens for a description type
      *
-     * @return string
+     * @param string $type  'short' or 'full'
+     * @return int
      */
-    public function getModel()
+    public function getMaxTokens(string $type): int
     {
-        return $this->getConfig(self::XML_PATH_API_MODEL);
+        $path = $type === 'short'
+            ? self::XML_PATH_SHORT_DESCRIPTION_MAX_TOKENS
+            : self::XML_PATH_DESCRIPTION_MAX_TOKENS;
+        return (int) ($this->getConfig($path) ?: 2048);
     }
 
     /**
-     * Get product attribute code
+     * Get selected product attribute codes as an array
      *
-     * @return mixed
+     * @return string[]
      */
-    public function getProductAttribute()
+    public function getProductAttributes(): array
     {
-        return $this->getConfig(self::XML_PATH_PRODUCT_ATTRIBUTE);
+        $value = (string) $this->getConfig(self::XML_PATH_PRODUCT_ATTRIBUTE);
+        return array_filter(array_map('trim', explode(',', $value)));
     }
 }

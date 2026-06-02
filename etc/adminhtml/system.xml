@@ -39,44 +39,112 @@
             </group>
             <group id="api" translate="label" type="text" sortOrder="20" showInDefault="1">
                 <label>API Configuration</label>
-                <field id="base_url" translate="label" type="text" sortOrder="10" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                <field id="provider" translate="label" type="select" sortOrder="10" showInDefault="1" canRestore="1">
+                    <label>AI Provider</label>
+                    <source_model>Mageprince\MageAI\Model\Config\Source\AIProvider</source_model>
+                </field>
+                <!-- OpenAI fields -->
+                <field id="base_url" translate="label" type="text" sortOrder="20" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
                     <label>Base URL</label>
+                    <comment>Use a custom OpenAI-compatible endpoint (e.g. a proxy). Leave default for api.openai.com.</comment>
+                    <depends>
+                        <field id="provider">openai</field>
+                    </depends>
                 </field>
-                <field id="api_secret" translate="label" type="obscure" sortOrder="20" showInDefault="1">
-                    <label>API Secret</label>
+                <field id="api_secret" translate="label" type="obscure" sortOrder="30" showInDefault="1">
+                    <label>API Key</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                    <comment><![CDATA[Generate API key from <a href="https://platform.openai.com/account/api-keys">here</a>]]></comment>
+                    <comment><![CDATA[Generate API key from <a href="https://platform.openai.com/account/api-keys" target="_blank">platform.openai.com</a>]]></comment>
+                    <depends>
+                        <field id="provider">openai</field>
+                    </depends>
                 </field>
-                <field id="model" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                <field id="model" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Model</label>
-                    <comment><![CDATA[Check <a href="https://platform.openai.com/docs/models/model-endpoint-compatibility" target="_blank">Models</a> for more details]]></comment>
+                    <comment><![CDATA[Check <a href="https://platform.openai.com/docs/models" target="_blank">OpenAI Models</a> for details]]></comment>
                     <source_model>Mageprince\MageAI\Model\Config\Source\AIModel</source_model>
+                    <depends>
+                        <field id="provider">openai</field>
+                    </depends>
+                </field>
+                <!-- Anthropic (Claude) fields -->
+                <field id="anthropic_base_url" translate="label" type="text" sortOrder="50" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                    <label>Base URL</label>
+                    <comment>Use a custom Anthropic-compatible endpoint. Leave default for api.anthropic.com.</comment>
+                    <depends>
+                        <field id="provider">anthropic</field>
+                    </depends>
+                </field>
+                <field id="anthropic_api_secret" translate="label" type="obscure" sortOrder="60" showInDefault="1">
+                    <label>API Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment><![CDATA[Generate API key from <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a>]]></comment>
+                    <depends>
+                        <field id="provider">anthropic</field>
+                    </depends>
+                </field>
+                <field id="anthropic_model" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Model</label>
+                    <comment><![CDATA[Check <a href="https://docs.anthropic.com/en/docs/about-claude/models" target="_blank">Anthropic Models</a> for details]]></comment>
+                    <source_model>Mageprince\MageAI\Model\Config\Source\AnthropicModel</source_model>
+                    <depends>
+                        <field id="provider">anthropic</field>
+                    </depends>
+                </field>
+                <!-- Google Gemini fields -->
+                <field id="gemini_base_url" translate="label" type="text" sortOrder="80" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                    <label>Base URL</label>
+                    <comment>Use a custom Gemini-compatible endpoint. Leave default for generativelanguage.googleapis.com.</comment>
+                    <depends>
+                        <field id="provider">gemini</field>
+                    </depends>
+                </field>
+                <field id="gemini_api_secret" translate="label" type="obscure" sortOrder="90" showInDefault="1">
+                    <label>API Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment><![CDATA[Generate API key from <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a>]]></comment>
+                    <depends>
+                        <field id="provider">gemini</field>
+                    </depends>
+                </field>
+                <field id="gemini_model" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Model</label>
+                    <comment><![CDATA[Check <a href="https://ai.google.dev/gemini-api/docs/models/gemini" target="_blank">Gemini Models</a> for details]]></comment>
+                    <source_model>Mageprince\MageAI\Model\Config\Source\GeminiModel</source_model>
+                    <depends>
+                        <field id="provider">gemini</field>
+                    </depends>
                 </field>
             </group>
             <group id="product_description" translate="label" type="text" sortOrder="30" showInDefault="1">
                 <label>Product Description Configuration</label>
-                <field id="attribute" translate="label" type="select" sortOrder="10" showInDefault="1" canRestore="1">
-                    <label>Product Attribute</label>
-                    <comment>Generate content based on selected product attribute value</comment>
+                <field id="temperature" translate="label" type="text" sortOrder="10" showInDefault="1" canRestore="1">
+                    <label>Temperature</label>
+                    <comment>What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.</comment>
+                    <validate>required-entry validate-number</validate>
+                </field>
+                <field id="attribute" translate="label" type="multiselect" sortOrder="20" showInDefault="1" canRestore="1">
+                    <label>Content Based on Selected Product Attributes</label>
+                    <comment>AI will use the values of the selected attributes to generate content.</comment>
                     <source_model>Mageprince\MageAI\Model\Config\Source\Attributes</source_model>
                 </field>
-                <field id="description_prompt" translate="label" type="text" sortOrder="20" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
-                    <label>Description Prompt</label>
-                    <comment><![CDATA[%d = Description Word Count, %s = Attribute label, %s = Attribute value.]]></comment>
+                <field id="description_prompt" translate="label" type="textarea" sortOrder="30" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                    <label>Full Description Prompt</label>
+                    <comment><![CDATA[Available variables: <code>{{ product.name }}</code> — product name, <code>{{ product.attributes }}</code> — selected attribute label/value pairs.]]></comment>
                 </field>
-                <field id="description_words_count" translate="label" type="text" sortOrder="30" showInDefault="1" canRestore="1">
-                    <label>Description Word Count</label>
-                    <comment>Note that higher word counts may result in longer API response times.</comment>
-                    <validate>required-entry validate-digits</validate>
+                <field id="description_max_tokens" translate="label" type="text" sortOrder="40" showInDefault="1" canRestore="1">
+                    <label>Full Description Max Tokens</label>
+                    <comment>Maximum number of tokens the AI may generate for the full description.</comment>
+                    <validate>required-entry validate-digits validate-greater-than-zero</validate>
                 </field>
-                <field id="short_description_prompt" translate="label" type="text" sortOrder="40" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                <field id="short_description_prompt" translate="label" type="textarea" sortOrder="50" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
                     <label>Short Description Prompt</label>
-                    <comment><![CDATA[%d = Short Description Word Count, %s = Attribute label, %s = Attribute value.]]></comment>
+                    <comment><![CDATA[Available variables: <code>{{ product.name }}</code> — product name, <code>{{ product.attributes }}</code> — selected attribute label/value pairs.]]></comment>
                 </field>
-                <field id="short_description_words_count" translate="label" type="text" sortOrder="50" showInDefault="1" canRestore="1">
-                    <label>Short Description Word Count</label>
-                    <comment>Note that higher word counts may result in longer API response times.</comment>
-                    <validate>required-entry validate-digits</validate>
+                <field id="short_description_max_tokens" translate="label" type="text" sortOrder="60" showInDefault="1" canRestore="1">
+                    <label>Short Description Max Tokens</label>
+                    <comment>Maximum number of tokens the AI may generate for the short description.</comment>
+                    <validate>required-entry validate-digits validate-greater-than-zero</validate>
                 </field>
             </group>
         </section>

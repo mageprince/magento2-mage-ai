@@ -38,6 +38,7 @@ $isEnabled = $helper->isEnabled();
     <script>
         window.mageAIAjaxUrl = '<?= $escaper->escapeJs($generateAjaxUrl) ?>';
         window.isMpMageAIEnabled = '<?= $escaper->escapeJs($isEnabled) ?>';
+        window.mpMageAIAttributes = <?= /* @noEscape */ json_encode($helper->getProductAttributes()) ?>;
     </script>
     <script type="text/x-magento-init">
         {

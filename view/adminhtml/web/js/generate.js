@@ -13,13 +13,13 @@ define([
             // Listen for click events on the standard generate button
             $(document).on('click', mageAIModel.options.generateBtnSelector, function () {
                 var currentTarget = this;
-                var sku = $("input[name='product[sku]']").val();
                 var type = 'full';
-                if($(this).attr('id') == mageAIModel.options.shortDescriptionFieldIdentifier) {
+                if ($(this).attr('id') == mageAIModel.options.shortDescriptionFieldIdentifier) {
                     type = 'short';
                 }
 
-                mageAIModel.generateContent(sku, type, false)
+                var attributeData = mageAIModel.collectAttributeData();
+                mageAIModel.generateContent(attributeData, type, false)
                     .done(function (content) {
                         if (content) {
                             mageAIModel.updateDescription(content, currentTarget);
@@ -31,7 +31,7 @@ define([
             });
 
             // Listen for click events on the advanced generate button
-            $(document).on('click', mageAIModel.options.advancedGenerateBtnSelector, function (event) {
+            $(document).on('click', mageAIModel.options.advancedGenerateBtnSelector, function () {
                 mageAIModel.clickAdvancedGenerateButton(this);
             });
         }

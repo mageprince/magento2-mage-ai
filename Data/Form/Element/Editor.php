@@ -58,7 +58,7 @@ class Editor extends \Magento\Framework\Data\Form\Element\Editor
         Escaper $escaper,
         HelperData $helper,
         $data = [],
-        \Magento\Framework\Serialize\Serializer\Json $serializer = null,
+        ?\Magento\Framework\Serialize\Serializer\Json $serializer = null,
         ?Random $random = null,
         ?SecureHtmlRenderer $secureRenderer = null
     ) {

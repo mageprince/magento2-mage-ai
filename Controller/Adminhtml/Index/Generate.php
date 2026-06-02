@@ -22,7 +22,6 @@
 namespace Mageprince\MageAI\Controller\Adminhtml\Index;
 
 use Magento\Backend\App\Action;
-use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Mageprince\MageAI\Helper\Data as HelperData;
@@ -39,12 +38,7 @@ class Generate extends Action implements HttpPostActionInterface
     protected $resultJson;
 
     /**
-     * @var ProductRepositoryInterface
-     */
-    protected $productRepository;
-
-    /**
-     * @var completions
+     * @var Completions
      */
     protected $queryCompletion;
 
@@ -54,23 +48,18 @@ class Generate extends Action implements HttpPostActionInterface
     protected $helper;
 
     /**
-     * Generate constructor.
-     *
      * @param Action\Context $context
      * @param JsonFactory $resultJson
-     * @param ProductRepositoryInterface $productRepository
      * @param Completions $queryCompletion
      * @param HelperData $helper
      */
     public function __construct(
         Action\Context $context,
         JsonFactory $resultJson,
-        ProductRepositoryInterface $productRepository,
         Completions $queryCompletion,
         HelperData $helper
     ) {
         $this->resultJson = $resultJson;
-        $this->productRepository = $productRepository;
         $this->queryCompletion = $queryCompletion;
         $this->helper = $helper;
         parent::__construct($context);
@@ -83,17 +72,26 @@ class Generate extends Action implements HttpPostActionInterface
      */
     public function execute()
     {
-        $response = ['error' => true, 'data' => 'unknown'];
-        $isEnabled = $this->helper->isEnabled();
-        if ($isEnabled) {
+        $response = ['error' => true, 'data' => __('An unknown error occurred.')];
+
+        if ($this->helper->isEnabled()) {
             try {
                 $customPrompt = $this->getRequest()->getParam('custom_prompt');
+
                 if ($customPrompt === 'false') {
-                    $sku = $this->getRequest()->getParam('sku', false);
-                    if ($sku) {
-                        $product = $this->productRepository->get($sku);
+                    $attributeData = $this->getRequest()->getParam('attribute_data', []);
+
+                    if (!is_array($attributeData) || empty($attributeData)) {
+                        $response = [
+                            'error' => true,
+                            'data'  => __('No attribute data was received. Please ensure the configured attributes have values in the product form.')
+                        ];
+                    } else {
                         $type = $this->getRequest()->getParam('type');
-                        $data = $this->queryCompletion->generateProductDescription($product, $type);
+                        $data = $this->queryCompletion->generateProductDescriptionFromData(
+                            $attributeData,
+                            $type
+                        );
                         $response = ['error' => false, 'data' => $data];
                     }
                 } else {
@@ -107,8 +105,7 @@ class Generate extends Action implements HttpPostActionInterface
             }
         }
 
-        $resultJson = $this->resultJson->create();
-        return $resultJson->setData($response);
+        return $this->resultJson->create()->setData($response);
     }
 
     /**
