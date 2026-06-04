@@ -78,6 +78,9 @@ You're very welcome to join in.
 
 ## Screenshots
 
+### Generate Product Image
+<img width="1280" height="720" alt="mageprince-mageai-image-generati" src="https://github.com/user-attachments/assets/b87f6d38-39e4-4a5c-afa4-8996f5790349" />
+
 ### Generate Descriptions with Custom Prompt
 ![mageprince-mageai-final](https://github.com/user-attachments/assets/9fbdad1b-5d27-4dbb-a3ca-274f3036ba34)
 
@@ -86,7 +89,4 @@ You're very welcome to join in.
 
 ### Generate Product Long Description With Page Builder
 ![full-description-short](https://github.com/user-attachments/assets/54031479-5d68-4af9-9fc1-c24680e4a858)
-
-### Admin Configuration
-![admin-configuration](https://github.com/user-attachments/assets/0e2f654d-19e4-496f-8262-45558853fb22)
 
