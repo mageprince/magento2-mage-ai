@@ -42,6 +42,12 @@ class Data extends AbstractHelper
     public const XML_PATH_DESCRIPTION_MAX_TOKENS = 'mageai/product_description/description_max_tokens';
     public const XML_PATH_SHORT_SHORT_DESCRIPTION_PROMPT = 'mageai/product_description/short_description_prompt';
     public const XML_PATH_SHORT_DESCRIPTION_MAX_TOKENS = 'mageai/product_description/short_description_max_tokens';
+    public const XML_PATH_IMAGE_DEFAULT_PROMPT = 'mageai/image_generation/default_prompt';
+    public const XML_PATH_IMAGE_ATTRIBUTE = 'mageai/image_generation/attribute';
+    public const XML_PATH_IMAGE_MODEL = 'mageai/image_generation/openai_image_model';
+    public const XML_PATH_GPT_IMAGE_SIZE = 'mageai/image_generation/gpt_image_size';
+    public const XML_PATH_GPT_IMAGE_QUALITY = 'mageai/image_generation/gpt_image_quality';
+    public const XML_PATH_GEMINI_IMAGE_MODEL = 'mageai/image_generation/gemini_image_model';
 
     /**
      * Get config value
@@ -217,5 +223,68 @@ class Data extends AbstractHelper
     {
         $value = (string) $this->getConfig(self::XML_PATH_PRODUCT_ATTRIBUTE);
         return array_filter(array_map('trim', explode(',', $value)));
+    }
+
+    /**
+     * Get default image generation prompt template
+     *
+     * @return string
+     */
+    public function getImageDefaultPrompt(): string
+    {
+        return (string) ($this->getConfig(self::XML_PATH_IMAGE_DEFAULT_PROMPT) ?: '');
+    }
+
+    /**
+     * Get selected product attribute codes for image generation as an array
+     *
+     * @return string[]
+     */
+    public function getImageAttributes(): array
+    {
+        $value = (string) $this->getConfig(self::XML_PATH_IMAGE_ATTRIBUTE);
+        return array_filter(array_map('trim', explode(',', $value)));
+    }
+
+    /**
+     * Get OpenAI image generation model (dall-e-3 / dall-e-2)
+     *
+     * @return string
+     */
+    public function getImageModel(): string
+    {
+        return (string) ($this->getConfig(self::XML_PATH_IMAGE_MODEL) ?: 'gpt-image-2');
+    }
+
+    /**
+     * Get the configured image size (all GPT Image models share the same size set)
+     *
+     * @return string
+     */
+    public function getImageSize(): string
+    {
+        return (string) ($this->getConfig(self::XML_PATH_GPT_IMAGE_SIZE) ?: '1024x1024');
+    }
+
+    /**
+     * Get the configured OpenAI image quality (low / medium / high / auto)
+     *
+     * Lower quality generates significantly faster.
+     *
+     * @return string
+     */
+    public function getImageQuality(): string
+    {
+        return (string) ($this->getConfig(self::XML_PATH_GPT_IMAGE_QUALITY) ?: 'medium');
+    }
+
+    /**
+     * Get Gemini Imagen model
+     *
+     * @return string
+     */
+    public function getGeminiImageModel(): string
+    {
+        return (string) ($this->getConfig(self::XML_PATH_GEMINI_IMAGE_MODEL) ?: 'gemini-2.5-flash-image');
     }
 }

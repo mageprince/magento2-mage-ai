@@ -1,7 +1,8 @@
 var config = {
     map: {
         '*': {
-            'mageAiGenerate': 'Mageprince_MageAI/js/generate'
+            'mageAiGenerate': 'Mageprince_MageAI/js/generate',
+            'mageAiImageGenerate': 'Mageprince_MageAI/js/image-generate'
         }
     },
     config: {

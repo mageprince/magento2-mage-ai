@@ -67,6 +67,14 @@ Follow these guidelines:
 - Output a single final result; do not suggest variants.
 - Return only the raw HTML description without extra text. Do not use any HTML tags.]]></short_description_prompt>
             </product_description>
+            <image_generation>
+                <default_prompt><![CDATA[A professional product photo of {{ product.name }}. Clean white background, studio lighting, e-commerce style, high quality, no text, no watermark.]]></default_prompt>
+                <attribute>color</attribute>
+                <openai_image_model>gpt-image-2</openai_image_model>
+                <gpt_image_size>1024x1024</gpt_image_size>
+                <gpt_image_quality>medium</gpt_image_quality>
+                <gemini_image_model>gemini-2.5-flash-image</gemini_image_model>
+            </image_generation>
         </mageai>
     </default>
 </config>
