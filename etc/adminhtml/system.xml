@@ -147,6 +147,50 @@
                     <validate>required-entry validate-digits validate-greater-than-zero</validate>
                 </field>
             </group>
+            <group id="image_generation" translate="label" type="text" sortOrder="40" showInDefault="1">
+                <label>Image Generation Configuration</label>
+                <field id="default_prompt" translate="label" type="textarea" sortOrder="10" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                    <label>Default Image Prompt</label>
+                    <comment><![CDATA[Used when no custom prompt is entered in the modal. Available variables: <code>{{ product.name }}</code> — product name, <code>{{ product.attributes }}</code> — selected attribute label/value pairs. Both variables also work in the modal's custom prompt.]]></comment>
+                </field>
+                <field id="attribute" translate="label" type="multiselect" sortOrder="15" showInDefault="1" canRestore="1">
+                    <label>Image Content Based on Selected Product Attributes</label>
+                    <comment>Values of these attributes fill the <![CDATA[<code>{{ product.attributes }}</code>]]> variable in the image prompt. Independent from the description attribute selection. Tip: keep image prompts focused on visual details.</comment>
+                    <source_model>Mageprince\MageAI\Model\Config\Source\Attributes</source_model>
+                </field>
+                <field id="openai_image_model" translate="label" type="select" sortOrder="20" showInDefault="1" canRestore="1">
+                    <label>OpenAI Image Model</label>
+                    <source_model>Mageprince\MageAI\Model\Config\Source\OpenAIImageModel</source_model>
+                    <comment><![CDATA[Check <a href="https://platform.openai.com/docs/guides/image-generation" target="_blank">Image Generation Models</a> for details.]]></comment>
+                    <depends>
+                        <field id="mageai/api/provider">openai</field>
+                    </depends>
+                </field>
+                <field id="gpt_image_size" translate="label" type="select" sortOrder="22" showInDefault="1" canRestore="1">
+                    <label>Image Size</label>
+                    <source_model>Mageprince\MageAI\Model\Config\Source\GptImageSize</source_model>
+                    <comment>All GPT Image models support the same sizes. Square (1024×1024) is recommended for product photos. Smaller sizes generate faster.</comment>
+                    <depends>
+                        <field id="mageai/api/provider">openai</field>
+                    </depends>
+                </field>
+                <field id="gpt_image_quality" translate="label" type="select" sortOrder="24" showInDefault="1" canRestore="1">
+                    <label>Image Quality</label>
+                    <source_model>Mageprince\MageAI\Model\Config\Source\ImageQuality</source_model>
+                    <comment>Lower quality generates much faster. Use Low for quick drafts, High for final product images.</comment>
+                    <depends>
+                        <field id="mageai/api/provider">openai</field>
+                    </depends>
+                </field>
+                <field id="gemini_image_model" translate="label" type="select" sortOrder="30" showInDefault="1" canRestore="1">
+                    <label>Gemini Image Model</label>
+                    <source_model>Mageprince\MageAI\Model\Config\Source\GeminiImageModel</source_model>
+                    <comment><![CDATA[Check <a href="https://ai.google.dev/gemini-api/docs/image-generation" target="_blank">Gemini Image Generation</a> for available models.]]></comment>
+                    <depends>
+                        <field id="mageai/api/provider">gemini</field>
+                    </depends>
+                </field>
+            </group>
         </section>
     </system>
 </config>

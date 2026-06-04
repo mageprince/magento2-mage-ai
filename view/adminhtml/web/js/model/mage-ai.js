@@ -67,11 +67,12 @@ define([
          * option ID resolution is needed. Skips attributes whose form fields
          * are not present on the page (not in the attribute set, etc.).
          *
+         * @param {Array} [attributes]  Attribute codes to collect; defaults to window.mpMageAIAttributes
          * @returns {Object} map of attributeCode → display value
          */
-        collectAttributeData: function () {
+        collectAttributeData: function (attributes) {
             var data = {};
-            var attributes = window.mpMageAIAttributes || [];
+            attributes = attributes || window.mpMageAIAttributes || [];
 
             $.each(attributes, function (i, code) {
                 var value = mageAI.getAttributeFormValue(code);

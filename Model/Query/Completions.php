@@ -23,10 +23,10 @@
 namespace Mageprince\MageAI\Model\Query;
 
 use Magento\Catalog\Api\Data\ProductInterface;
-use Magento\Eav\Model\Config as EavConfig;
 use Magento\Framework\HTTP\Client\Curl;
 use Magento\Framework\Serialize\Serializer\Json;
 use Mageprince\MageAI\Helper\Data as HelperData;
+use Mageprince\MageAI\Model\AttributeData\Formatter as AttributeFormatter;
 
 class Completions
 {
@@ -51,29 +51,29 @@ class Completions
     protected $helper;
 
     /**
-     * @var EavConfig
+     * @var AttributeFormatter
      */
-    protected $eavConfig;
+    protected $attributeFormatter;
 
     /**
      * @param Curl $curl
      * @param Json $json
      * @param HelperData $helper
-     * @param EavConfig $eavConfig
+     * @param AttributeFormatter $attributeFormatter
      */
-    public function __construct(Curl $curl, Json $json, HelperData $helper, EavConfig $eavConfig)
+    public function __construct(Curl $curl, Json $json, HelperData $helper, AttributeFormatter $attributeFormatter)
     {
         $this->curl = $curl;
         $this->helper = $helper;
         $this->json = $json;
-        $this->eavConfig = $eavConfig;
+        $this->attributeFormatter = $attributeFormatter;
     }
 
     /**
      * Generate product description content via the configured AI provider
      *
      * @param ProductInterface $product
-     * @param string $type  'short' or 'full'
+     * @param string $type 'short' or 'full'
      * @return string
      * @throws QueryException
      */
@@ -96,11 +96,12 @@ class Completions
     }
 
     /**
-     * Generate description from raw attribute data collected from the product form.
+     * Generate description from raw attribute data collected from the product form
+     *
      * Works for both new (unsaved) and existing products.
      *
-     * @param array  $data  ['attributeCode' => 'displayValue', ...]
-     * @param string $type  'short' or 'full'
+     * @param array $data ['attributeCode' => 'displayValue', ...]
+     * @param string $type 'short' or 'full'
      * @return string
      * @throws QueryException
      */
@@ -125,49 +126,14 @@ class Completions
 
         $productName = $data['name'] ?? '';
 
-        $parts = [];
-        foreach ($data as $code => $value) {
-            if ($value !== null && $value !== '') {
-                $label = $this->resolveAttributeLabel($code);
-                $parts[] = $label . ': ' . $value;
-            }
-        }
-
         $prompt = str_replace('{{ product.name }}', $productName, $template);
-        $prompt = str_replace('{{ product.attributes }}', implode(', ', $parts), $prompt);
+        $prompt = str_replace(
+            '{{ product.attributes }}',
+            $this->attributeFormatter->buildLabelValueText($data),
+            $prompt
+        );
 
         return $prompt;
-    }
-
-    /**
-     * Resolve a catalog_product attribute code to its frontend label.
-     * Falls back to a humanised version of the code if the attribute is not found.
-     *
-     * @param string $code
-     * @return string
-     */
-    protected function resolveAttributeLabel(string $code): string
-    {
-        try {
-            $attribute = $this->eavConfig->getAttribute('catalog_product', $code);
-            if ($attribute && $attribute->getAttributeId()) {
-                return $attribute->getDefaultFrontendLabel() ?: $this->humanizeCode($code);
-            }
-        } catch (\Exception $e) {
-            // fall through to default
-        }
-        return $this->humanizeCode($code);
-    }
-
-    /**
-     * Convert an attribute code to a human-readable label (e.g. short_description → Short Description).
-     *
-     * @param string $code
-     * @return string
-     */
-    private function humanizeCode(string $code): string
-    {
-        return ucwords(str_replace('_', ' ', $code));
     }
 
     /**
@@ -525,7 +491,8 @@ class Completions
     // -------------------------------------------------------------------------
 
     /**
-     * Strip markdown code fences that some models add despite being told not to.
+     * Strip markdown code fences that some models add despite being told not to
+     *
      * Handles ```html, ```xml, ``` and similar variants.
      *
      * @param string $content

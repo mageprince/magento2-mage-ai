@@ -15,3 +15,25 @@
     z-index: 9999 !important;
 }
 
+.mp-generate-image-btn {
+    margin-left: 10px !important;
+}
+
+.mp-mageai-image-modal .modal-inner-wrap {
+    width: 600px !important;
+}
+
+.mp-mageai-image-modal .modal-footer {
+    text-align: left !important;
+    padding-top: 0 !important;
+}
+
+.mp-mageai-image-modal .modal-content {
+    padding-bottom: 0 !important;
+}
+
+.mp-mageai-image-modal #mp-image-prompt {
+    min-height: 100px;
+    width: 100%;
+}
+

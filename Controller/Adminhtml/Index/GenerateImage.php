@@ -22,13 +22,14 @@
 namespace Mageprince\MageAI\Controller\Adminhtml\Index;
 
 use Magento\Backend\App\Action;
-use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\App\Action\HttpPostActionInterface;
+use Magento\Framework\Controller\Result\JsonFactory;
 use Mageprince\MageAI\Helper\Data as HelperData;
-use Mageprince\MageAI\Model\Query\Completions;
+use Mageprince\MageAI\Model\AttributeData\Formatter as AttributeFormatter;
+use Mageprince\MageAI\Model\Query\ImageGeneration;
 use Mageprince\MageAI\Model\Query\QueryException;
 
-class Generate extends Action implements HttpPostActionInterface
+class GenerateImage extends Action implements HttpPostActionInterface
 {
     public const ADMIN_RESOURCE = 'Mageprince_MageAI::generate';
 
@@ -38,9 +39,9 @@ class Generate extends Action implements HttpPostActionInterface
     protected $resultJson;
 
     /**
-     * @var Completions
+     * @var ImageGeneration
      */
-    protected $queryCompletion;
+    protected $imageGeneration;
 
     /**
      * @var HelperData
@@ -48,25 +49,33 @@ class Generate extends Action implements HttpPostActionInterface
     protected $helper;
 
     /**
+     * @var AttributeFormatter
+     */
+    protected $attributeFormatter;
+
+    /**
      * @param Action\Context $context
      * @param JsonFactory $resultJson
-     * @param Completions $queryCompletion
+     * @param ImageGeneration $imageGeneration
      * @param HelperData $helper
+     * @param AttributeFormatter $attributeFormatter
      */
     public function __construct(
         Action\Context $context,
         JsonFactory $resultJson,
-        Completions $queryCompletion,
-        HelperData $helper
+        ImageGeneration $imageGeneration,
+        HelperData $helper,
+        AttributeFormatter $attributeFormatter
     ) {
         $this->resultJson = $resultJson;
-        $this->queryCompletion = $queryCompletion;
+        $this->imageGeneration = $imageGeneration;
         $this->helper = $helper;
+        $this->attributeFormatter = $attributeFormatter;
         parent::__construct($context);
     }
 
     /**
-     * Generate Content
+     * Generate Image
      *
      * @return \Magento\Framework\App\ResponseInterface
      */
@@ -76,31 +85,25 @@ class Generate extends Action implements HttpPostActionInterface
 
         if ($this->helper->isEnabled()) {
             try {
-                $customPrompt = $this->getRequest()->getParam('custom_prompt');
-
-                if ($customPrompt === 'false') {
-                    $attributeData = $this->getRequest()->getParam('attribute_data', []);
-
-                    if (!is_array($attributeData) || empty($attributeData)) {
-                        $response = [
-                            'error' => true,
-                            'data'  => __(
-                                'No attribute data was received. Please ensure the configured '
-                                . 'attributes have values in the product form.'
-                            )
-                        ];
-                    } else {
-                        $type = $this->getRequest()->getParam('type');
-                        $data = $this->queryCompletion->generateProductDescriptionFromData(
-                            $attributeData,
-                            $type
-                        );
-                        $response = ['error' => false, 'data' => $data];
-                    }
-                } else {
-                    $data = $this->queryCompletion->generateCustomContent($customPrompt);
-                    $response = ['error' => false, 'data' => $data];
+                $customPrompt = trim((string) $this->getRequest()->getParam('custom_prompt', ''));
+                $productName = (string) $this->getRequest()->getParam('product_name', '');
+                $attributeData = $this->getRequest()->getParam('attribute_data', []);
+                if (!is_array($attributeData)) {
+                    $attributeData = [];
                 }
+
+                // Use the custom prompt when provided, otherwise the configured default.
+                // Both support the {{ product.name }} and {{ product.attributes }} variables.
+                $prompt = $customPrompt !== '' ? $customPrompt : $this->helper->getImageDefaultPrompt();
+                $prompt = str_replace('{{ product.name }}', $productName, $prompt);
+                $prompt = str_replace(
+                    '{{ product.attributes }}',
+                    $this->attributeFormatter->buildLabelValueText($attributeData),
+                    $prompt
+                );
+
+                $imageData = $this->imageGeneration->generate($prompt);
+                return $this->resultJson->create()->setData($imageData);
             } catch (QueryException $e) {
                 $response = ['error' => true, 'data' => $e->getMessage()];
             } catch (\Exception $e) {

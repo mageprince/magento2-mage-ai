@@ -1,10 +1,11 @@
 # Magento 2 MageAI Extension
-This Magento 2 extension integrates **OpenAI (GPT)**, **Anthropic (Claude)**, and **Google Gemini** to automatically generate high-quality short and long product descriptions based on product attributes like name, features, material, and more. It's a powerful tool to save time and improve content quality across your catalog.
+This Magento 2 extension integrates **OpenAI (GPT)**, **Anthropic (Claude)**, and **Google Gemini** to automatically generate high-quality short and long product descriptions — and **AI-generated product images** — based on product attributes like name, features, material, and more. It's a powerful tool to save time and improve content quality across your catalog.
 
 ❤️ The goal of this extension is to remain fully open-source and continuously expand by integrating every possible way to use AI with Magento 2. From writing content to helping customers, improving SEO, or automating tasks — the idea is to make Magento and AI work great together. I'm building it to be flexible and helpful for everyone, and I'd love for others to join in. If you're into Magento or AI, your ideas and contributions are always welcome. Let's create something awesome together!
 
 ## Features
 - **Multi-provider AI support** — switch between OpenAI (GPT), Anthropic (Claude), and Google Gemini from a single config screen
+- **AI product image generation** — generate a product image from a prompt (or a configurable default) right from the Images And Videos section, added straight to the gallery (OpenAI & Gemini)
 - Generate product descriptions using a **custom free-form prompt** for full control and flexibility
 - Customize prompt templates using `{{ product.name }}` and `{{ product.attributes }}` variables
 - Select **multiple product attributes** to base generation on (name, material, features, etc.)
@@ -35,6 +36,9 @@ This Magento 2 extension integrates **OpenAI (GPT)**, **Anthropic (Claude)**, an
 
 ### Custom Prompt
 Click **"Advanced Generate with MageAI"** to open the custom prompt modal and type any free-form instruction — the module skips attribute lookup and sends your prompt directly to the AI.
+
+### Generate Product Image
+Open a product and click **"Generate Image with MageAI"** next to the **Add Video** button in the Images And Videos section. Enter a prompt (or leave it empty to use the default configured prompt) and the generated image is added straight to the product gallery. Available with the **OpenAI** and **Gemini** providers.
 
 ### Prompt Templates
 Default prompts support two variables:

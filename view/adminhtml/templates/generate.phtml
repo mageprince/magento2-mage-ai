@@ -10,8 +10,13 @@ $helper = $this->helper(\Mageprince\MageAI\Helper\Data::class);
 $isEnabled = $helper->isEnabled();
 ?>
 <?php if ($isEnabled): ?>
+    <?php
+    $generateAjaxUrl = $block->getUrl('mp_mageai/index/generate');
+    $generateImageAjaxUrl = $block->getUrl('mp_mageai/index/generateimage');
+    ?>
+
+    <!-- Text content generation modal -->
     <div id="advanced-generate-modal" style="display:none;">
-        <?php $generateAjaxUrl = $block->getUrl('mp_mageai/index/generate'); ?>
         <div class="generate-modal-body-content">
             <form id="mp-prompt-generate-form">
                 <fieldset class="admin__fieldset">
@@ -35,15 +40,44 @@ $isEnabled = $helper->isEnabled();
             </form>
         </div>
     </div>
+
+    <!-- Image generation modal -->
+    <div id="mp-image-generate-modal" style="display:none;">
+        <div class="generate-modal-body-content">
+            <fieldset class="admin__fieldset">
+                <div class="admin__field admin__field-wide">
+                    <div class="admin__field-control">
+                        <textarea
+                            rows="4"
+                            id="mp-image-prompt"
+                            class="admin__control-text"
+                            placeholder="<?= $escaper->escapeHtmlAttr(__('E.g. A professional product photo on a white background, studio lighting, e-commerce style')) ?>"
+                            name="image_prompt"></textarea>
+                        <div class="admin__field-note mpai-modal-note">
+                            <span>
+                                <?= $escaper->escapeHtml(__('Leave empty to use the default image prompt configured in Stores > Configuration > Mageprince > Mage AI > Image Generation.')) ?>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
     <script>
         window.mageAIAjaxUrl = '<?= $escaper->escapeJs($generateAjaxUrl) ?>';
+        window.mageAIGenerateImageUrl = '<?= $escaper->escapeJs($generateImageAjaxUrl) ?>';
         window.isMpMageAIEnabled = '<?= $escaper->escapeJs($isEnabled) ?>';
         window.mpMageAIAttributes = <?= /* @noEscape */ json_encode($helper->getProductAttributes()) ?>;
+        window.mpMageAIImageAttributes = <?= /* @noEscape */ json_encode($helper->getImageAttributes()) ?>;
     </script>
     <script type="text/x-magento-init">
         {
             "#mp-prompt-generate-form": {
                 "mageAiGenerate": {}
+            },
+            "#mp-image-generate-modal": {
+                "mageAiImageGenerate": {}
             }
         }
     </script>
