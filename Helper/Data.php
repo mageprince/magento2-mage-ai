@@ -43,6 +43,7 @@ class Data extends AbstractHelper
     public const XML_PATH_SHORT_SHORT_DESCRIPTION_PROMPT = 'mageai/product_description/short_description_prompt';
     public const XML_PATH_SHORT_DESCRIPTION_MAX_TOKENS = 'mageai/product_description/short_description_max_tokens';
     public const XML_PATH_IMAGE_DEFAULT_PROMPT = 'mageai/image_generation/default_prompt';
+    public const XML_PATH_IMAGE_MODIFY_DEFAULT_PROMPT = 'mageai/image_generation/modify_default_prompt';
     public const XML_PATH_IMAGE_ATTRIBUTE = 'mageai/image_generation/attribute';
     public const XML_PATH_IMAGE_MODEL = 'mageai/image_generation/openai_image_model';
     public const XML_PATH_GPT_IMAGE_SIZE = 'mageai/image_generation/gpt_image_size';
@@ -233,6 +234,16 @@ class Data extends AbstractHelper
     public function getImageDefaultPrompt(): string
     {
         return (string) ($this->getConfig(self::XML_PATH_IMAGE_DEFAULT_PROMPT) ?: '');
+    }
+
+    /**
+     * Get default image modification prompt template
+     *
+     * @return string
+     */
+    public function getImageModifyDefaultPrompt(): string
+    {
+        return (string) ($this->getConfig(self::XML_PATH_IMAGE_MODIFY_DEFAULT_PROMPT) ?: '');
     }
 
     /**

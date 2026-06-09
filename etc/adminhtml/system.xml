@@ -153,6 +153,10 @@
                     <label>Default Image Prompt</label>
                     <comment><![CDATA[Used when no custom prompt is entered in the modal. Available variables: <code>{{ product.name }}</code> — product name, <code>{{ product.attributes }}</code> — selected attribute label/value pairs. Both variables also work in the modal's custom prompt.]]></comment>
                 </field>
+                <field id="modify_default_prompt" translate="label" type="textarea" sortOrder="12" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                    <label>Default Image Modify Prompt</label>
+                    <comment><![CDATA[Used by "Modify Image with MageAI" when no custom prompt is entered. The original image is sent to the AI together with this instruction. Available variables: <code>{{ product.name }}</code> — product name, <code>{{ product.attributes }}</code> — selected attribute label/value pairs.]]></comment>
+                </field>
                 <field id="attribute" translate="label" type="multiselect" sortOrder="15" showInDefault="1" canRestore="1">
                     <label>Image Content Based on Selected Product Attributes</label>
                     <comment>Values of these attributes fill the <![CDATA[<code>{{ product.attributes }}</code>]]> variable in the image prompt. Independent from the description attribute selection. Tip: keep image prompts focused on visual details.</comment>

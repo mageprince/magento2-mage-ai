@@ -13,6 +13,7 @@ $isEnabled = $helper->isEnabled();
     <?php
     $generateAjaxUrl = $block->getUrl('mp_mageai/index/generate');
     $generateImageAjaxUrl = $block->getUrl('mp_mageai/index/generateimage');
+    $modifyImageAjaxUrl = $block->getUrl('mp_mageai/index/modifyimage');
     ?>
 
     <!-- Text content generation modal -->
@@ -55,7 +56,7 @@ $isEnabled = $helper->isEnabled();
                             name="image_prompt"></textarea>
                         <div class="admin__field-note mpai-modal-note">
                             <span>
-                                <?= $escaper->escapeHtml(__('Leave empty to use the default image prompt configured in Stores > Configuration > Mageprince > Mage AI > Image Generation.')) ?>
+                                <?= $escaper->escapeHtml(__('Leave empty to use the default image prompt configured in Stores > Configuration > Mageprince > MageAI > Image Generation.')) ?>
                             </span>
                         </div>
                     </div>
@@ -64,9 +65,77 @@ $isEnabled = $helper->isEnabled();
         </div>
     </div>
 
+    <!-- Image modification modal -->
+    <div id="mp-image-modify-modal" style="display:none;">
+        <div class="generate-modal-body-content mp-modify-wrap">
+            <!-- View 1: choose an existing product image -->
+            <div class="mp-modify-view mp-modify-view-list">
+                <div class="mp-modify-images-grid" data-role="modify-grid"></div>
+                <div class="mp-modify-empty" data-role="modify-empty" style="display:none;">
+                    <span><?= $escaper->escapeHtml(__('No product images found. Add or generate an image first, then modify it.')) ?></span>
+                </div>
+            </div>
+
+            <!-- View 2: enter a modification prompt -->
+            <div class="mp-modify-view mp-modify-view-prompt" style="display:none;">
+                <div class="mp-modify-selected-preview">
+                    <img data-role="modify-selected-img" src="" alt=""/>
+                </div>
+                <fieldset class="admin__fieldset">
+                    <div class="admin__field admin__field-wide">
+                        <div class="admin__field-control">
+                            <textarea
+                                rows="4"
+                                id="mp-modify-prompt"
+                                class="admin__control-text"
+                                placeholder="<?= $escaper->escapeHtmlAttr(__('E.g. Replace the background with a marble surface, keep the product unchanged')) ?>"
+                                name="modify_prompt"></textarea>
+                            <div class="admin__field-note mpai-modal-note">
+                                <span>
+                                    <?= $escaper->escapeHtml(__('Leave empty to use the default modify prompt configured in Stores > Configuration > Mageprince > MageAI > Image Generation.')) ?>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+                <div class="mp-modify-actions">
+                    <button type="button" class="action-secondary" data-role="modify-back-list">
+                        <span><?= $escaper->escapeHtml(__('Back')) ?></span>
+                    </button>
+                    <button type="button" class="action-primary" data-role="modify-submit">
+                        <span><?= $escaper->escapeHtml(__('Edit Image')) ?></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- View 3: compare and confirm -->
+            <div class="mp-modify-view mp-modify-view-result" style="display:none;">
+                <div class="mp-modify-compare">
+                    <div class="mp-modify-compare-col">
+                        <span class="mp-modify-compare-label"><?= $escaper->escapeHtml(__('Original')) ?></span>
+                        <img data-role="modify-original-img" src="" alt=""/>
+                    </div>
+                    <div class="mp-modify-compare-col">
+                        <span class="mp-modify-compare-label"><?= $escaper->escapeHtml(__('Modified')) ?></span>
+                        <img data-role="modify-result-img" src="" alt=""/>
+                    </div>
+                </div>
+                <div class="mp-modify-actions">
+                    <button type="button" class="action-secondary" data-role="modify-regenerate">
+                        <span><?= $escaper->escapeHtml(__('Try Again')) ?></span>
+                    </button>
+                    <button type="button" class="action-primary" data-role="modify-confirm">
+                        <span><?= $escaper->escapeHtml(__('Confirm & Replace')) ?></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         window.mageAIAjaxUrl = '<?= $escaper->escapeJs($generateAjaxUrl) ?>';
         window.mageAIGenerateImageUrl = '<?= $escaper->escapeJs($generateImageAjaxUrl) ?>';
+        window.mageAIModifyImageUrl = '<?= $escaper->escapeJs($modifyImageAjaxUrl) ?>';
         window.isMpMageAIEnabled = '<?= $escaper->escapeJs($isEnabled) ?>';
         window.mpMageAIAttributes = <?= /* @noEscape */ json_encode($helper->getProductAttributes()) ?>;
         window.mpMageAIImageAttributes = <?= /* @noEscape */ json_encode($helper->getImageAttributes()) ?>;
@@ -78,6 +147,9 @@ $isEnabled = $helper->isEnabled();
             },
             "#mp-image-generate-modal": {
                 "mageAiImageGenerate": {}
+            },
+            "#mp-image-modify-modal": {
+                "mageAiImageModify": {}
             }
         }
     </script>
