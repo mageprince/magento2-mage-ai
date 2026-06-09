@@ -69,6 +69,7 @@ Follow these guidelines:
             </product_description>
             <image_generation>
                 <default_prompt><![CDATA[A professional product photo of {{ product.name }}. Clean white background, studio lighting, e-commerce style, high quality, no text, no watermark.]]></default_prompt>
+                <modify_default_prompt><![CDATA[Enhance this product photo: clean white background, professional studio lighting, e-commerce style, high quality, no text, no watermark. Keep the product itself unchanged.]]></modify_default_prompt>
                 <attribute>color</attribute>
                 <openai_image_model>gpt-image-2</openai_image_model>
                 <gpt_image_size>1024x1024</gpt_image_size>

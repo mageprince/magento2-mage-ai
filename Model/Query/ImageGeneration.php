@@ -22,11 +22,7 @@
 
 namespace Mageprince\MageAI\Model\Query;
 
-use Magento\Catalog\Model\Product\Media\Config as MediaConfig;
-use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Filesystem;
 use Magento\Framework\HTTP\Client\Curl;
-use Magento\Framework\HTTP\Client\CurlFactory;
 use Magento\Framework\Serialize\Serializer\Json;
 use Mageprince\MageAI\Helper\Data as HelperData;
 
@@ -53,42 +49,26 @@ class ImageGeneration
     protected $helper;
 
     /**
-     * @var Filesystem
+     * @var ImageStorage
      */
-    protected $filesystem;
-
-    /**
-     * @var MediaConfig
-     */
-    protected $mediaConfig;
-
-    /**
-     * @var CurlFactory
-     */
-    protected $curlFactory;
+    protected $imageStorage;
 
     /**
      * @param Curl $curl
      * @param Json $json
      * @param HelperData $helper
-     * @param Filesystem $filesystem
-     * @param MediaConfig $mediaConfig
-     * @param CurlFactory $curlFactory
+     * @param ImageStorage $imageStorage
      */
     public function __construct(
         Curl $curl,
         Json $json,
         HelperData $helper,
-        Filesystem $filesystem,
-        MediaConfig $mediaConfig,
-        CurlFactory $curlFactory
+        ImageStorage $imageStorage
     ) {
         $this->curl = $curl;
         $this->json = $json;
         $this->helper = $helper;
-        $this->filesystem = $filesystem;
-        $this->mediaConfig = $mediaConfig;
-        $this->curlFactory = $curlFactory;
+        $this->imageStorage = $imageStorage;
     }
 
     /**
@@ -172,12 +152,12 @@ class ImageGeneration
             if ($imageData === false) {
                 throw new QueryException(__('Failed to decode base64 image from OpenAI response.'));
             }
-            return $this->persistImageData($imageData, 'image/jpeg', 'jpg');
+            return $this->imageStorage->persist($imageData, 'image/jpeg', 'jpg');
         }
 
         if (!empty($item['url'])) {
-            $imageData = $this->downloadImageFromUrl($item['url']);
-            return $this->persistImageData($imageData, 'image/jpeg', 'jpg');
+            $imageData = $this->imageStorage->download($item['url']);
+            return $this->imageStorage->persist($imageData, 'image/jpeg', 'jpg');
         }
 
         throw new QueryException(__('No image URL or base64 data found in OpenAI response.'));
@@ -262,83 +242,6 @@ class ImageGeneration
             throw new QueryException(__('Failed to decode image data returned by Gemini.'));
         }
 
-        return $this->persistImageData($imageData, $mimeType, $ext);
-    }
-
-    /**
-     * Download image binary from a URL
-     *
-     * @param string $url
-     * @return string
-     * @throws QueryException
-     */
-    protected function downloadImageFromUrl(string $url): string
-    {
-        // Use a fresh Curl instance so the API request's auth headers do not leak into this download
-        /** @var Curl $curl */
-        $curl = $this->curlFactory->create();
-        $curl->setTimeout(60);
-        $curl->setOption(CURLOPT_FOLLOWLOCATION, true);
-
-        try {
-            $curl->get($url);
-        } catch (\Exception $e) {
-            throw new QueryException(__('Failed to download generated image: %1', $e->getMessage()));
-        }
-
-        $data = $curl->getBody();
-        if ($curl->getStatus() >= 400 || $data === '') {
-            throw new QueryException(__('Failed to download generated image (HTTP %1).', $curl->getStatus()));
-        }
-
-        return $data;
-    }
-
-    /**
-     * Save image binary to the product media temp directory and return gallery-compatible file data
-     *
-     * The format mirrors what Magento\Catalog\Controller\Adminhtml\Product\Gallery\Upload returns.
-     *
-     * The file is stored using Magento's standard two-level dispersion path (/m/a/filename.jpg).
-     * This is required: the get.php on-the-fly resizer (MediaStorage\App\Media::getOriginalImage)
-     * resolves the original image from a cache URL by taking the last three path segments,
-     * so any non-dispersed path breaks frontend cache generation and shows the placeholder.
-     *
-     * @param string $imageData  Raw binary content
-     * @param string $mimeType
-     * @param string $ext
-     * @return array
-     * @throws QueryException
-     */
-    protected function persistImageData(string $imageData, string $mimeType, string $ext): array
-    {
-        $fileName = 'mageai_' . uniqid('', true) . '.' . $ext;
-
-        // Standard Magento dispersion: /m/a/ for "mageai_..." filenames
-        $dispersionPath = \Magento\Framework\File\Uploader::getDispersionPath($fileName);
-        $fileRelativeToTmp = $dispersionPath . '/' . $fileName; // /m/a/mageai_xxx.jpg
-
-        try {
-            $mediaDirectory = $this->filesystem->getDirectoryWrite(DirectoryList::MEDIA);
-
-            // Save under catalog/product/tmp/m/a/ so Magento moves it to the permanent
-            // location (catalog/product/m/a/) when the product is saved.
-            $tmpBase = $this->mediaConfig->getBaseTmpMediaPath(); // catalog/product/tmp
-            $mediaDirectory->create($tmpBase . $dispersionPath);
-            $mediaDirectory->writeFile($tmpBase . $fileRelativeToTmp, $imageData);
-        } catch (\Exception $e) {
-            throw new QueryException(__('Failed to save generated image: %1', $e->getMessage()));
-        }
-
-        $url = $this->mediaConfig->getTmpMediaUrl($fileRelativeToTmp);
-
-        return [
-            'name' => $fileName,
-            'size' => strlen($imageData),
-            'type' => $mimeType,
-            'url'  => $url,
-            // Appending .tmp signals Magento to move this file to the permanent directory on product save
-            'file' => $fileRelativeToTmp . '.tmp',
-        ];
+        return $this->imageStorage->persist($imageData, $mimeType, $ext);
     }
 }
