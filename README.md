@@ -91,6 +91,9 @@ You're very welcome to join in.
 
 ## Screenshots
 
+### Edit Product Image
+<img width="1280" height="720" alt="mageprince-mageai-edit-image" src="https://github.com/user-attachments/assets/edbe7ee9-6817-4f4c-b27b-e1a7b8538c79" />
+
 ### Generate Product Image
 <img width="1280" height="720" alt="mageprince-mageai-image-generati" src="https://github.com/user-attachments/assets/b87f6d38-39e4-4a5c-afa4-8996f5790349" />
 
