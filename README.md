@@ -7,6 +7,7 @@ This Magento 2 extension integrates **OpenAI (GPT)**, **Anthropic (Claude)**, an
 - **Multi-provider AI support** — switch between OpenAI (GPT), Anthropic (Claude), and Google Gemini from a single config screen
 - **AI product image generation** — generate a product image from a prompt (or a configurable default) right from the Images And Videos section, added straight to the gallery (OpenAI & Gemini)
 - **AI product image editing** — pick any existing product image, describe the change in a prompt (or use a configurable default), preview the edited result side-by-side with the original, and replace it in the gallery on confirm (OpenAI & Gemini)
+- **Global baseline prompt** — set brand voice, language, compliance and SEO rules once and have them automatically applied to every text generation (full, short, and custom prompts) across all providers
 - Generate product descriptions using a **custom free-form prompt** for full control and flexibility
 - Customize prompt templates using `{{ product.name }}` and `{{ product.attributes }}` variables
 - Select **multiple product attributes** to base generation on (name, material, features, etc.)

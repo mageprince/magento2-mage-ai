@@ -245,7 +245,7 @@ class Completions
 
         if (strpos($model, 'gpt') !== false) {
             $payload['messages'] = [
-                ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
+                ['role' => 'system', 'content' => $this->getSystemPrompt()],
                 ['role' => 'user',   'content' => $prompt],
             ];
         } else {
@@ -337,7 +337,7 @@ class Completions
             'model'       => $this->helper->getAnthropicModel(),
             'max_tokens'  => $maxToken ?: self::ANTHROPIC_DEFAULT_MAX_TOKENS,
             'temperature' => min(1.0, $this->helper->getTemperature()),
-            'system'      => self::SYSTEM_PROMPT,
+            'system'      => $this->getSystemPrompt(),
             'messages'    => [
                 ['role' => 'user', 'content' => $prompt],
             ],
@@ -421,7 +421,7 @@ class Completions
     {
         $payload = [
             'system_instruction' => [
-                'parts' => [['text' => self::SYSTEM_PROMPT]],
+                'parts' => [['text' => $this->getSystemPrompt()]],
             ],
             'contents' => [
                 ['parts' => [['text' => $prompt]]],
@@ -489,6 +489,24 @@ class Completions
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * Build the system instruction sent with every request.
+     *
+     * The base rules (clean output, no markdown fences) are always present because the
+     * editor write-back and stripCodeFences() depend on them. The merchant-configured
+     * baseline prompt — brand voice, compliance, SEO standards — is appended after them
+     * and applies to every provider and every generation method, including Advanced Generate.
+     *
+     * @return string
+     */
+    private function getSystemPrompt(): string
+    {
+        $baseline = $this->helper->getBaselinePrompt();
+        return $baseline === ''
+            ? self::SYSTEM_PROMPT
+            : self::SYSTEM_PROMPT . "\n\n" . $baseline;
+    }
 
     /**
      * Strip markdown code fences that some models add despite being told not to
