@@ -36,6 +36,10 @@
                     <label>Enable</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="baseline_prompt" translate="label" type="textarea" sortOrder="20" showInDefault="1">
+                    <label>Baseline Prompt</label>
+                    <comment><![CDATA[Instructions automatically applied to every text generation request — Full Description, Short Description and Advanced Generate — across all providers. Use for brand voice, compliance requirements, SEO standards and content governance (e.g. "Use UK English. Maintain a professional tone. Avoid marketing hype."). Sent as the AI's system instruction, in addition to the built-in output-formatting rules. Leave empty to disable.]]></comment>
+                </field>
             </group>
             <group id="api" translate="label" type="text" sortOrder="20" showInDefault="1">
                 <label>API Configuration</label>

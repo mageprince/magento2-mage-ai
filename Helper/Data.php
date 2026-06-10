@@ -26,6 +26,7 @@ use Magento\Framework\App\Helper\AbstractHelper;
 class Data extends AbstractHelper
 {
     public const XML_PATH_IS_ENABLED = 'mageai/general/enabled';
+    public const XML_PATH_BASELINE_PROMPT = 'mageai/general/baseline_prompt';
     public const XML_PATH_PROVIDER = 'mageai/api/provider';
     public const XML_PATH_API_BASE_URL = 'mageai/api/base_url';
     public const XML_PATH_API_KEY = 'mageai/api/api_secret';
@@ -69,6 +70,18 @@ class Data extends AbstractHelper
     public function isEnabled()
     {
         return $this->scopeConfig->isSetFlag(self::XML_PATH_IS_ENABLED);
+    }
+
+    /**
+     * Get the global baseline (system) prompt applied to every text generation request
+     *
+     * Merchant-configured brand voice / compliance / SEO instructions. Empty by default.
+     *
+     * @return string
+     */
+    public function getBaselinePrompt(): string
+    {
+        return trim((string) $this->getConfig(self::XML_PATH_BASELINE_PROMPT));
     }
 
     /**

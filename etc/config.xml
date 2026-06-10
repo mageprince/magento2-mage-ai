@@ -25,6 +25,7 @@
         <mageai>
             <general>
                 <enabled>1</enabled>
+                <baseline_prompt/>
             </general>
             <api>
                 <provider>gemini</provider>
