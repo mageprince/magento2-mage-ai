@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Mageprince
+ *
+ * @category    Mageprince
+ * @package     Mageprince_MageAI
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="mageai_generate_image_metadata" xsi:type="object">Mageprince\MageAI\Console\GenerateImageMetadataCommand</item>
+                <item name="mageai_queue_image_metadata" xsi:type="object">Mageprince\MageAI\Console\QueueImageMetadataCommand</item>
+            </argument>
+        </arguments>
+    </type>
+</config>

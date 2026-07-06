@@ -30,26 +30,28 @@ define([
          * button (falling back to the Add Video button). Idempotent.
          */
         _injectButton: function () {
-            if ($('#' + this.options.buttonId).length) {
-                return;
+            var $btn = $('#' + this.options.buttonId),
+                $anchor = $('#' + this.options.generateButtonId);
+
+            if (!$btn.length) {
+                if (!$anchor.length) {
+                    $anchor = $('#add_video_button');
+                }
+                if (!$anchor.length) {
+                    return;
+                }
+
+                $btn = $('<button>', {
+                    id: this.options.buttonId,
+                    type: 'button',
+                    'class': 'action-secondary mp-modify-image-btn',
+                    title: $.mage.__('Edit Image with MageAI')
+                }).html('<span>' + $.mage.__('Edit Image with MageAI') + '</span>');
+
+                $anchor.after($btn);
             }
 
-            var $anchor = $('#' + this.options.generateButtonId);
-            if (!$anchor.length) {
-                $anchor = $('#add_video_button');
-            }
-            if (!$anchor.length) {
-                return;
-            }
-
-            var $btn = $('<button>', {
-                id: this.options.buttonId,
-                type: 'button',
-                'class': 'action-secondary mp-modify-image-btn',
-                title: $.mage.__('Edit Image with MageAI')
-            }).html('<span>' + $.mage.__('Edit Image with MageAI') + '</span>');
-
-            $anchor.after($btn);
+            mageAIModel.addImageMetadataButton($btn);
 
             this._bindButton();
         },

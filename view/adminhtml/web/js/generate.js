@@ -34,6 +34,16 @@ define([
             $(document).on('click', mageAIModel.options.advancedGenerateBtnSelector, function () {
                 mageAIModel.clickAdvancedGenerateButton(this);
             });
+
+            // Listen for click events on image metadata generation button
+            $(document).on('click', mageAIModel.options.imageMetadataBtnSelector, function () {
+                mageAIModel.generateImageMetadata();
+            });
+
+            // Listen for click events on image metadata queue button
+            $(document).on('click', mageAIModel.options.queueImageMetadataBtnSelector, function () {
+                mageAIModel.queueImageMetadata();
+            });
         }
     });
 

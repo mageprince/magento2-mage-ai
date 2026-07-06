@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="mageprince_mageai_image_metadata_queue" resource="default" engine="innodb" comment="MageAI Image Metadata Queue">
+        <column xsi:type="int" name="queue_id" unsigned="true" nullable="false" identity="true" comment="Queue ID"/>
+        <column xsi:type="int" name="product_id" unsigned="true" nullable="false" comment="Product ID"/>
+        <column xsi:type="varchar" name="sku" nullable="false" length="64" comment="Product SKU"/>
+        <column xsi:type="varchar" name="product_type" nullable="false" length="64" comment="Product Type"/>
+        <column xsi:type="int" name="missing_score" nullable="false" default="0" comment="Missing Metadata Priority Score"/>
+        <column xsi:type="text" name="missing_fields" nullable="true" comment="Missing Fields JSON"/>
+        <column xsi:type="varchar" name="status" nullable="false" length="32" default="pending" comment="Queue Status"/>
+        <column xsi:type="timestamp" name="locked_at" nullable="true" comment="Lock Acquired At"/>
+        <column xsi:type="varchar" name="locked_by" nullable="true" length="128" comment="Lock Owner"/>
+        <column xsi:type="int" name="attempts" unsigned="true" nullable="false" default="0" comment="Processing Attempts"/>
+        <column xsi:type="text" name="last_error" nullable="true" comment="Last Error"/>
+        <column xsi:type="text" name="updated_fields" nullable="true" comment="Updated Fields JSON"/>
+        <column xsi:type="timestamp" name="created_at" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" nullable="false" default="CURRENT_TIMESTAMP" on_update="true" comment="Updated At"/>
+        <column xsi:type="timestamp" name="processed_at" nullable="true" comment="Processed At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="queue_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="MAGEPRINCE_MAGEAI_IMAGE_METADATA_QUEUE_PRODUCT_ID">
+            <column name="product_id"/>
+        </constraint>
+        <index referenceId="MAGEPRINCE_MAGEAI_IMAGE_METADATA_QUEUE_STATUS_SCORE" indexType="btree">
+            <column name="status"/>
+            <column name="missing_score"/>
+            <column name="queue_id"/>
+        </index>
+        <index referenceId="MAGEPRINCE_MAGEAI_IMAGE_METADATA_QUEUE_LOCK" indexType="btree">
+            <column name="status"/>
+            <column name="locked_at"/>
+        </index>
+    </table>
+</schema>

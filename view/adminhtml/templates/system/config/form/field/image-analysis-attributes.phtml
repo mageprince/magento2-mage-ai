@@ -1,0 +1,190 @@
+<?php
+/**
+ * Mageprince
+ *
+ * @category    Mageprince
+ * @package     Mageprince_MageAI
+ */
+
+/** @var \Mageprince\MageAI\Block\Adminhtml\System\Config\Form\Field\ImageAnalysisAttributes $block */
+/** @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer */
+?>
+
+<?php
+$_htmlId = $block->getHtmlId() ? $block->getHtmlId() : '_' . uniqid();
+$_mainColumns = $block->getMainColumns();
+$_instructionColumn = $block->getInstructionColumnName();
+$_actionColspan = $block->isAddAfter() ? 2 : 1;
+$_instructionColspan = max(1, count($_mainColumns) + $_actionColspan - 1);
+?>
+
+<div class="design_theme_ua_regexp mp-mageai-image-analysis-attributes" id="grid<?= $block->escapeHtmlAttr($_htmlId) ?>">
+    <div class="admin__control-table-wrapper">
+        <table class="admin__control-table mp-mageai-image-analysis-attributes-table" id="<?= $block->escapeHtmlAttr($block->getElement()->getId()) ?>">
+            <thead>
+            <tr>
+                <?php foreach ($_mainColumns as $columnName => $column): ?>
+                    <th class="mp-mageai-image-analysis-col-<?= $block->escapeHtmlAttr($columnName) ?>"><?= $block->escapeHtml($column['label']) ?></th>
+                <?php endforeach; ?>
+                <th class="col-actions" colspan="<?= (int) $_actionColspan ?>"><?= $block->escapeHtml(__('Action')) ?></th>
+            </tr>
+            </thead>
+            <tfoot>
+            <tr>
+                <td colspan="<?= count($_mainColumns) + $_actionColspan ?>" class="col-actions-add">
+                    <button id="addToEndBtn<?= $block->escapeHtmlAttr($_htmlId) ?>"
+                            class="action-add"
+                            title="<?= $block->escapeHtmlAttr(__('Add')) ?>"
+                            type="button">
+                        <span><?= $block->escapeHtml($block->getAddButtonLabel()) ?></span>
+                    </button>
+                </td>
+            </tr>
+            </tfoot>
+            <tbody id="addRow<?= $block->escapeHtmlAttr($_htmlId) ?>"></tbody>
+        </table>
+    </div>
+    <input type="hidden" name="<?= $block->escapeHtmlAttr($block->getElement()->getName()) ?>[__empty]" value="" />
+
+    <?php $scriptString = <<<script
+        require([
+            'mage/template',
+            'prototype'
+        ], function (mageTemplate) {
+        window.arrayRow{$block->escapeJs($_htmlId)} = {
+
+            template: mageTemplate(
+                    '<tr id="<%- _id %>" class="mp-mageai-image-analysis-main-row">'
+script;
+    foreach ($_mainColumns as $columnName => $column):
+        $scriptString .= <<<script
+
+                        + '<td class="mp-mageai-image-analysis-col-{$block->escapeJs($columnName)}">'
+                        + '{$block->escapeJs($block->renderCellTemplate($columnName))}'
+                        + '<\/td>'
+script;
+    endforeach;
+
+    if ($block->isAddAfter()):
+        $scriptString .= <<<script
+
+                        + '<td><button class="action-add" type="button" id="addAfterBtn<%- _id %>"><span>'
+                        + '{$block->escapeJs(__('Add after'))}'
+                        + '<\/span><\/button><\/td>'
+script;
+    endif;
+    $scriptString .= <<<script
+
+                        + '<td class="col-actions"><button '
+                        + 'class="action-delete" type="button">'
+                        + '<span>{$block->escapeJs(__('Delete'))}<\/span><\/button><\/td>'
+                        + '<\/tr>'
+                        + '<tr id="<%- _id %>_instruction_row" class="mp-mageai-image-analysis-instruction-row">'
+                        + '<td class="mp-mageai-image-analysis-instruction-label">'
+                        + '<label for="<%- _id %>_{$block->escapeJs($_instructionColumn)}">{$block->escapeJs($block->getInstructionLabel())}<\/label>'
+                        + '<\/td>'
+                        + '<td class="mp-mageai-image-analysis-instruction-cell" colspan="{$block->escapeJs((string) $_instructionColspan)}">'
+                        + '{$block->escapeJs($block->renderCellTemplate($_instructionColumn))}'
+                        + '<\/td>'
+                        + '<\/tr>'
+
+script;
+    $scriptString1 = /* $noEscape */ $secureRenderer->renderEventListenerAsTag(
+        'onclick',
+        "arrayRow" . $block->escapeJs($_htmlId) . ".del('<%- _id %>')",
+        "tr#<%- _id %> button.action-delete"
+    );
+
+    $scriptString .= " + '" . $block->escapeJs($scriptString1) . "'" . PHP_EOL;
+
+    $scriptString .= <<<script
+            ),
+
+            add: function(rowData, insertAfterId) {
+                var templateValues;
+
+                if (rowData) {
+                    templateValues = rowData;
+                } else {
+                    var d = new Date();
+                    templateValues = {
+script;
+    foreach ($block->getColumns() as $columnName => $column):
+        $scriptString .= <<<script
+
+                            {$block->escapeJs($columnName)}: '',
+                                'option_extra_attrs': {},
+script;
+    endforeach;
+    $scriptString .= <<<script
+
+                        _id: '_' + d.getTime() + '_' + d.getMilliseconds()
+                };
+            }
+
+            if (insertAfterId) {
+                Element.insert($(insertAfterId + '_instruction_row') || $(insertAfterId), {after: this.template(templateValues)});
+            } else {
+                Element.insert($('addRow{$block->escapeJs($_htmlId)}'), {bottom: this.template(templateValues)});
+            }
+
+            if (rowData) {
+                var rowInputElementNames = Object.keys(rowData.column_values);
+                for (var i = 0; i < rowInputElementNames.length; i++) {
+                    if ($(rowInputElementNames[i])) {
+                        $(rowInputElementNames[i]).setValue(rowData.column_values[rowInputElementNames[i]]);
+                    }
+                }
+            }
+
+script;
+    if ($block->isAddAfter()):
+        $scriptString .= <<<script
+
+            Event.observe('addAfterBtn' + templateValues._id, 'click', this.add.bind(this, false, templateValues._id));
+
+script;
+    endif;
+    $scriptString .= <<<script
+
+            },
+
+            del: function(rowId) {
+                if ($(rowId + '_instruction_row')) {
+                    $(rowId + '_instruction_row').remove();
+                }
+                if ($(rowId)) {
+                    $(rowId).remove();
+                }
+            }
+        }
+
+        Event.observe('addToEndBtn{$block->escapeJs($_htmlId)}',
+            'click',
+            arrayRow{$block->escapeJs($_htmlId)}.add.bind(
+                arrayRow{$block->escapeJs($_htmlId)}, false, false
+            )
+        );
+
+script;
+
+    foreach ($block->getArrayRows() as $_rowId => $_row) {
+        $scriptString .= /** @noEscape */ " arrayRow" . $block->escapeJs($_htmlId) .
+            ".add(" . /** @noEscape */ $_row->toJson() . ");\n";
+    }
+    $scriptString .= <<<script
+
+script;
+    if ($block->getElement()->getDisabled()):
+        $scriptString .= <<<script
+
+        toggleValueElements({checked: true}, $('grid{$block->escapeJs($_htmlId)}').parentNode);
+script;
+    endif;
+    $scriptString .= <<<script
+
+        });
+script;
+    ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>
+</div>

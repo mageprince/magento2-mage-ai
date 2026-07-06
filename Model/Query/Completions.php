@@ -33,6 +33,8 @@ class Completions
     private const ANTHROPIC_VERSION = '2023-06-01';
     private const ANTHROPIC_DEFAULT_MAX_TOKENS = 2048;
     private const GEMINI_DEFAULT_MAX_TOKENS = 2048;
+    private const OLLAMA_DEFAULT_NUM_PREDICT = 2048;
+    private const OLLAMA_REQUEST_TIMEOUT = 900;
     private const SYSTEM_PROMPT = 'You are a helpful assistant. Provide only the main generated content without any greetings, introductions, or explanations. Never wrap output in markdown code blocks or backticks.';
 
     /**
@@ -151,6 +153,8 @@ class Completions
                 return $this->makeAnthropicRequest($this->getAnthropicPayload($prompt, $maxToken));
             case 'gemini':
                 return $this->makeGeminiRequest($this->getGeminiPayload($prompt, $maxToken));
+            case 'ollama':
+                return $this->makeOllamaRequest($this->getOllamaPayload($prompt, $maxToken));
             default:
                 return $this->makeOpenAIRequest($this->getOpenAIPayload($prompt, $maxToken));
         }
@@ -267,7 +271,7 @@ class Completions
         $this->setOpenAIHeaders();
         $model = $this->helper->getModel();
         $endpoint = strpos($model, 'gpt') !== false ? '/v1/chat/completions' : '/v1/completions';
-        $this->curl->post($this->helper->getApiBaseUrl() . $endpoint, $payload);
+        $this->curl->post($this->helper->getOpenAIEndpointUrl($endpoint), $payload);
         return $this->validateOpenAIResponse();
     }
 
@@ -484,6 +488,86 @@ class Completions
         }
 
         return $this->stripCodeFences($text);
+    }
+
+    // -------------------------------------------------------------------------
+    // Ollama native
+    // -------------------------------------------------------------------------
+
+    /**
+     * Set Ollama native request headers.
+     *
+     * @return void
+     */
+    protected function setOllamaHeaders(): void
+    {
+        $this->curl->setTimeout(self::OLLAMA_REQUEST_TIMEOUT);
+        $this->curl->setHeaders([
+            'Content-Type' => 'application/json',
+        ]);
+    }
+
+    /**
+     * Build Ollama native /api/chat payload.
+     *
+     * @param string $prompt
+     * @param int|false $maxToken
+     * @return string
+     */
+    protected function getOllamaPayload(string $prompt, $maxToken = false): string
+    {
+        return $this->json->serialize([
+            'model' => $this->helper->getOllamaModel(),
+            'messages' => [
+                ['role' => 'system', 'content' => $this->getSystemPrompt()],
+                ['role' => 'user', 'content' => $prompt],
+            ],
+            'options' => [
+                'temperature' => $this->helper->getTemperature(),
+                'num_predict' => $maxToken ?: self::OLLAMA_DEFAULT_NUM_PREDICT,
+            ],
+            'stream' => false,
+        ]);
+    }
+
+    /**
+     * Execute Ollama native request and return generated text.
+     *
+     * @param string $payload
+     * @return string
+     * @throws QueryException
+     */
+    protected function makeOllamaRequest(string $payload): string
+    {
+        $this->setOllamaHeaders();
+        $this->curl->post($this->helper->getOllamaEndpointUrl('/api/chat'), $payload);
+        return $this->validateOllamaResponse();
+    }
+
+    /**
+     * Parse and validate Ollama native API response.
+     *
+     * @return string
+     * @throws QueryException
+     */
+    protected function validateOllamaResponse(): string
+    {
+        $status = $this->curl->getStatus();
+        if ($status >= 400) {
+            throw new QueryException(__('Ollama endpoint returned HTTP %1: %2', $status, $this->curl->getBody()));
+        }
+
+        $response = $this->json->unserialize($this->curl->getBody());
+        if (isset($response['error'])) {
+            throw new QueryException(__($response['error']));
+        }
+
+        $content = $response['message']['content'] ?? '';
+        if (!is_string($content) || trim($content) === '') {
+            throw new QueryException(__('No content returned from Ollama native endpoint.'));
+        }
+
+        return $this->stripCodeFences($content);
     }
 
     // -------------------------------------------------------------------------

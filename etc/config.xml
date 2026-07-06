@@ -32,12 +32,15 @@
                 <base_url>https://api.openai.com</base_url>
                 <api_secret backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
                 <model>gpt-4o-mini</model>
+                <custom_model/>
                 <anthropic_base_url>https://api.anthropic.com</anthropic_base_url>
                 <anthropic_api_secret backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
                 <anthropic_model>claude-sonnet-4-6</anthropic_model>
                 <gemini_base_url>https://generativelanguage.googleapis.com</gemini_base_url>
                 <gemini_api_secret backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>
                 <gemini_model>gemini-2.5-flash</gemini_model>
+                <ollama_base_url>http://localhost:11434</ollama_base_url>
+                <ollama_model>gemma4:12b-it-qat</ollama_model>
             </api>
             <product_description>
                 <temperature>0.5</temperature>
@@ -77,6 +80,70 @@ Follow these guidelines:
                 <gpt_image_quality>medium</gpt_image_quality>
                 <gemini_image_model>gemini-2.5-flash-image</gemini_image_model>
             </image_generation>
+            <product_image_analysis>
+                <max_tokens>2000</max_tokens>
+                <temperature>0</temperature>
+                <ollama_num_ctx>8192</ollama_num_ctx>
+                <ollama_think>0</ollama_think>
+                <prompt><![CDATA[Analyze the product image and generate catalog attribute values for an ecommerce product.
+
+Guidelines:
+- Base the result primarily on visible image content.
+- Use existing product attribute values as supporting context when they are provided, especially when generating a blank attribute from already-populated title, description, or keyword fields.
+- Do not invent artist names, SKUs, brands, Bible verses, denominations, historical events, or proper nouns unless they are visible in the image or present in the existing product context.
+- Follow each target attribute's instruction exactly.
+- Return values through the requested JSON schema only. Do not wrap JSON in markdown or code fences.]]></prompt>
+                <attributes>
+                    <name>
+                        <attribute>name</attribute>
+                        <instruction>Generate a short, natural, descriptive product title based on the visible image content. Do not keyword-stuff.</instruction>
+                        <policy>placeholder</policy>
+                        <allow_new_options>0</allow_new_options>
+                    </name>
+                    <description>
+                        <attribute>description</attribute>
+                        <instruction>Generate one clear ecommerce product description paragraph, 80-180 words. Use the image as the primary source and use any existing title or keywords as supporting context only when helpful.</instruction>
+                        <policy>empty</policy>
+                        <allow_new_options>0</allow_new_options>
+                    </description>
+                    <meta_title>
+                        <attribute>meta_title</attribute>
+                        <instruction>Generate a concise SEO meta title based on the image and product context. Keep it under 60 characters when possible.</instruction>
+                        <policy>empty</policy>
+                        <allow_new_options>0</allow_new_options>
+                    </meta_title>
+                    <meta_description>
+                        <attribute>meta_description</attribute>
+                        <instruction>Generate a natural SEO meta description based on the image and product context. Keep it under 155 characters when possible.</instruction>
+                        <policy>empty</policy>
+                        <allow_new_options>0</allow_new_options>
+                    </meta_description>
+                    <meta_keyword>
+                        <attribute>meta_keyword</attribute>
+                        <instruction>Generate concise SEO meta keywords based on the image and product context. Return a comma-separated phrase list.</instruction>
+                        <policy>empty</policy>
+                        <allow_new_options>0</allow_new_options>
+                    </meta_keyword>
+                    <keywords>
+                        <attribute>keywords</attribute>
+                        <instruction>Generate the strongest primary catalog/search keywords as concise phrases. Return an array of 3-8 phrases. Promote terms here when they are primary subjects, even if currently stored in a secondary or tertiary keyword field.</instruction>
+                        <policy>merge_promote</policy>
+                        <allow_new_options>1</allow_new_options>
+                    </keywords>
+                    <secondary_keywords>
+                        <attribute>secondary_keywords</attribute>
+                        <instruction>Generate supporting subject, setting, style, season, emotion, and usage keywords. Return an array of 5-12 phrases. Do not repeat terms that belong in primary keywords.</instruction>
+                        <policy>merge</policy>
+                        <allow_new_options>1</allow_new_options>
+                    </secondary_keywords>
+                    <tertiary_keywords>
+                        <attribute>tertiary_keywords</attribute>
+                        <instruction>Generate additional related search terms. Return an array of 5-15 phrases. Do not repeat stronger primary or secondary terms.</instruction>
+                        <policy>merge</policy>
+                        <allow_new_options>1</allow_new_options>
+                    </tertiary_keywords>
+                </attributes>
+            </product_image_analysis>
         </mageai>
     </default>
 </config>

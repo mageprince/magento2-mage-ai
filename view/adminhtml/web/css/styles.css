@@ -131,3 +131,106 @@
     margin-top: 10px;
 }
 
+#row_mageai_product_image_analysis_attributes > td.label {
+    max-width: 90px;
+    min-width: 90px;
+    padding-right: 8px;
+    width: 90px;
+}
+
+#row_mageai_product_image_analysis_attributes > td.label label {
+    display: block;
+    font-size: 12px;
+    line-height: 1.25;
+}
+
+#row_mageai_product_image_analysis_attributes > td.value {
+    max-width: none;
+    width: auto;
+}
+
+#row_mageai_product_image_analysis_attributes > td.use-default {
+    max-width: 42px;
+    min-width: 42px;
+    overflow: hidden;
+    white-space: nowrap;
+    width: 42px;
+}
+
+#row_mageai_product_image_analysis_attributes > td.use-default label {
+    font-size: 0;
+}
+
+#row_mageai_product_image_analysis_attributes > td.use-default input {
+    margin-left: 0;
+}
+
+.mp-mageai-image-analysis-attributes {
+    max-width: none;
+    min-width: 560px;
+    width: min(920px, calc(100vw - 545px));
+}
+
+.mp-mageai-image-analysis-attributes .admin__control-table-wrapper {
+    max-width: none;
+    overflow-x: auto;
+}
+
+.mp-mageai-image-analysis-attributes-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.mp-mageai-image-analysis-attributes-table th,
+.mp-mageai-image-analysis-attributes-table td {
+    vertical-align: top;
+}
+
+.mp-mageai-image-analysis-attributes-table .mp-mageai-image-analysis-col-attribute {
+    width: 300px;
+}
+
+.mp-mageai-image-analysis-attributes-table .mp-mageai-image-analysis-col-policy {
+    width: 180px;
+}
+
+.mp-mageai-image-analysis-attributes-table .mp-mageai-image-analysis-col-allow_new_options {
+    width: 140px;
+}
+
+.mp-mageai-image-analysis-attributes-table .col-actions {
+    width: 70px;
+}
+
+.mp-mageai-image-analysis-attributes-table .mp-mageai-image-analysis-col-attribute select {
+    width: 100%;
+}
+
+.mp-mageai-image-analysis-attributes-table .mp-mageai-image-analysis-col-policy select,
+.mp-mageai-image-analysis-attributes-table .mp-mageai-image-analysis-col-allow_new_options select {
+    width: 100%;
+}
+
+.mp-mageai-image-analysis-instruction-row td {
+    border-top: 0;
+    padding-top: 0;
+}
+
+.mp-mageai-image-analysis-instruction-label label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    padding-top: 8px;
+}
+
+.mp-mageai-image-analysis-instruction-label {
+    width: 135px;
+}
+
+.mp-mageai-image-analysis-prompt {
+    box-sizing: border-box;
+    line-height: 1.4;
+    min-height: 115px;
+    resize: vertical;
+    width: 100%;
+}

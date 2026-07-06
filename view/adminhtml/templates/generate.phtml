@@ -14,6 +14,8 @@ $isEnabled = $helper->isEnabled();
     $generateAjaxUrl = $block->getUrl('mp_mageai/index/generate');
     $generateImageAjaxUrl = $block->getUrl('mp_mageai/index/generateimage');
     $modifyImageAjaxUrl = $block->getUrl('mp_mageai/index/modifyimage');
+    $analyzeImageAjaxUrl = $block->getUrl('mp_mageai/index/analyzeimage');
+    $queueImageMetadataAjaxUrl = $block->getUrl('mp_mageai/index/queueimagemetadata');
     ?>
 
     <!-- Text content generation modal -->
@@ -136,6 +138,8 @@ $isEnabled = $helper->isEnabled();
         window.mageAIAjaxUrl = '<?= $escaper->escapeJs($generateAjaxUrl) ?>';
         window.mageAIGenerateImageUrl = '<?= $escaper->escapeJs($generateImageAjaxUrl) ?>';
         window.mageAIModifyImageUrl = '<?= $escaper->escapeJs($modifyImageAjaxUrl) ?>';
+        window.mageAIAnalyzeImageUrl = '<?= $escaper->escapeJs($analyzeImageAjaxUrl) ?>';
+        window.mageAIQueueImageMetadataUrl = '<?= $escaper->escapeJs($queueImageMetadataAjaxUrl) ?>';
         window.isMpMageAIEnabled = '<?= $escaper->escapeJs($isEnabled) ?>';
         window.mpMageAIAttributes = <?= /* @noEscape */ json_encode($helper->getProductAttributes()) ?>;
         window.mpMageAIImageAttributes = <?= /* @noEscape */ json_encode($helper->getImageAttributes()) ?>;

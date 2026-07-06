@@ -71,6 +71,13 @@
                         <field id="provider">openai</field>
                     </depends>
                 </field>
+                <field id="custom_model" translate="label" type="text" sortOrder="45" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Custom OpenAI-Compatible Model</label>
+                    <comment>Optional. Enter a model ID from an OpenAI-compatible endpoint. When set, this overrides the selected OpenAI model.</comment>
+                    <depends>
+                        <field id="provider">openai</field>
+                    </depends>
+                </field>
                 <!-- Anthropic (Claude) fields -->
                 <field id="anthropic_base_url" translate="label" type="text" sortOrder="50" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
                     <label>Base URL</label>
@@ -117,6 +124,21 @@
                     <source_model>Mageprince\MageAI\Model\Config\Source\GeminiModel</source_model>
                     <depends>
                         <field id="provider">gemini</field>
+                    </depends>
+                </field>
+                <!-- Ollama native fields -->
+                <field id="ollama_base_url" translate="label" type="text" sortOrder="110" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                    <label>Base URL</label>
+                    <comment>Native Ollama URL, for example http://localhost:11434. Do not include /api/chat; /v1 is stripped automatically if present.</comment>
+                    <depends>
+                        <field id="provider">ollama</field>
+                    </depends>
+                </field>
+                <field id="ollama_model" translate="label" type="text" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Model</label>
+                    <comment>Ollama model ID, for example gemma4:12b-it-qat, gemma3:latest, or qwen3-vl:latest. Product image analysis requires a vision-capable model.</comment>
+                    <depends>
+                        <field id="provider">ollama</field>
                     </depends>
                 </field>
             </group>
@@ -197,6 +219,38 @@
                     <depends>
                         <field id="mageai/api/provider">gemini</field>
                     </depends>
+                </field>
+            </group>
+            <group id="product_image_analysis" translate="label" type="text" sortOrder="50" showInDefault="1">
+                <label>Product Image Analysis</label>
+                <field id="prompt" translate="label" type="textarea" sortOrder="10" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                    <label>Image Metadata Prompt</label>
+                    <comment><![CDATA[Used by <code>bin/magento mageai:generate:image-metadata</code> and the admin product edit image-analysis button. The product's image is sent to the configured AI provider. Attribute-specific JSON output instructions are built from the rows below.]]></comment>
+                </field>
+                <field id="max_tokens" translate="label" type="text" sortOrder="20" showInDefault="1" canRestore="1">
+                    <label>Image Analysis Max Tokens</label>
+                    <validate>required-entry validate-digits validate-greater-than-zero</validate>
+                </field>
+                <field id="temperature" translate="label" type="text" sortOrder="30" showInDefault="1" canRestore="1">
+                    <label>Image Analysis Temperature</label>
+                    <comment>Sampling temperature for image analysis only. Use 0 for deterministic catalog metadata.</comment>
+                    <validate>required-entry validate-number</validate>
+                </field>
+                <field id="ollama_num_ctx" translate="label" type="text" sortOrder="40" showInDefault="1" canRestore="1">
+                    <label>Ollama Context Window</label>
+                    <comment>Native Ollama image-analysis context window tokens (num_ctx). Increase for large prompts or JSON schemas; lower to fit available VRAM. Applies only when AI Provider is Ollama.</comment>
+                    <validate>required-entry validate-digits validate-greater-than-zero</validate>
+                </field>
+                <field id="ollama_think" translate="label" type="select" sortOrder="50" showInDefault="1" canRestore="1">
+                    <label>Enable Ollama Thinking Mode</label>
+                    <comment>Send native Ollama think=true for image metadata. Leave disabled for catalog metadata unless the selected model requires reasoning, because thinking models can spend output tokens before emitting JSON.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="attributes" translate="label" sortOrder="60" showInDefault="1" canRestore="1">
+                    <label>Update These Attributes Based on Product Image Analysis</label>
+                    <frontend_model>Mageprince\MageAI\Block\Adminhtml\System\Config\Form\Field\ImageAnalysisAttributes</frontend_model>
+                    <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    <comment><![CDATA[Add one row per safe product attribute to update. Supported inputs are text, textarea, select, and multiselect. The update policy controls whether MageAI fills only empty fields, replaces values, or merges keyword/tag-style multiselects. Enable "Create Options" only for tag-style select/multiselect attributes where AI may add missing options. Existing values for configured attributes are included as context, so empty SEO/title/description fields can be generated from populated values.]]></comment>
                 </field>
             </group>
         </section>
