@@ -37,6 +37,11 @@ class ImageAnalysisAttributes extends AbstractFieldArray
     protected $allowNewOptionsRenderer;
 
     /**
+     * @var AttributeColumn|null
+     */
+    protected $optionSourceAttributeRenderer;
+
+    /**
      * Prepare dynamic row columns.
      *
      * @return void
@@ -59,6 +64,10 @@ class ImageAnalysisAttributes extends AbstractFieldArray
         $this->addColumn('allow_new_options', [
             'label' => __('Create Options'),
             'renderer' => $this->getAllowNewOptionsRenderer(),
+        ]);
+        $this->addColumn('option_source_attribute', [
+            'label' => __('Option Source'),
+            'renderer' => $this->getOptionSourceAttributeRenderer(),
         ]);
         $this->_addAfter = false;
         $this->_addButtonLabel = __('Add Attribute');
@@ -137,6 +146,7 @@ class ImageAnalysisAttributes extends AbstractFieldArray
         $attribute = (string) $row->getData('attribute');
         $policy = (string) $row->getData('policy');
         $allowNewOptions = (string) $row->getData('allow_new_options');
+        $optionSourceAttribute = (string) $row->getData('option_source_attribute');
         $options = [];
 
         if ($attribute !== '') {
@@ -147,6 +157,9 @@ class ImageAnalysisAttributes extends AbstractFieldArray
         }
         if ($allowNewOptions !== '') {
             $options['option_' . $this->getAllowNewOptionsRenderer()->calcOptionHash($allowNewOptions)] = 'selected="selected"';
+        }
+        if ($optionSourceAttribute !== '') {
+            $options['option_' . $this->getOptionSourceAttributeRenderer()->calcOptionHash($optionSourceAttribute)] = 'selected="selected"';
         }
 
         $row->setData('option_extra_attrs', $options);
@@ -204,5 +217,24 @@ class ImageAnalysisAttributes extends AbstractFieldArray
         }
 
         return $this->allowNewOptionsRenderer;
+    }
+
+    /**
+     * Get optional select renderer for the attribute that owns shared options.
+     *
+     * @return AttributeColumn
+     */
+    private function getOptionSourceAttributeRenderer(): AttributeColumn
+    {
+        if ($this->optionSourceAttributeRenderer === null) {
+            $this->optionSourceAttributeRenderer = $this->getLayout()->createBlock(
+                AttributeColumn::class,
+                '',
+                ['data' => ['is_render_to_js_template' => true]]
+            );
+            $this->optionSourceAttributeRenderer->addOption('', __('Own attribute'));
+        }
+
+        return $this->optionSourceAttributeRenderer;
     }
 }

@@ -86,18 +86,12 @@ class QueueManager
             return 0;
         }
 
-        $processingProductIds = $this->getProcessingProductIds(array_map(function (array $row): int {
-            return (int) $row['product_id'];
-        }, $rows));
+        $connection = $this->getConnection();
         $now = $this->dateTime->gmtDate();
-        $data = [];
+        $affected = 0;
         foreach ($rows as $row) {
             $productId = (int) $row['product_id'];
-            if (isset($processingProductIds[$productId])) {
-                continue;
-            }
-
-            $data[] = [
+            $data = [
                 'product_id' => $productId,
                 'sku' => (string) $row['sku'],
                 'product_type' => (string) $row['product_type'],
@@ -110,17 +104,22 @@ class QueueManager
                 'updated_at' => $now,
                 'processed_at' => null,
             ];
+            $updateData = $data;
+            unset($updateData['product_id']);
+            $updated = $connection->update(
+                $this->getTableName(),
+                $updateData,
+                ['product_id = ?' => $productId, 'status != ?' => self::STATUS_PROCESSING]
+            );
+            if ($updated > 0) {
+                $affected += $updated;
+                continue;
+            }
+
+            $affected += $connection->insertOnDuplicate($this->getTableName(), $data, ['product_id']);
         }
 
-        if (empty($data)) {
-            return 0;
-        }
-
-        return $this->getConnection()->insertOnDuplicate(
-            $this->getTableName(),
-            $data,
-            ['sku', 'product_type', 'missing_score', 'missing_fields', 'status', 'locked_at', 'locked_by', 'last_error', 'updated_at', 'processed_at']
-        );
+        return $affected;
     }
 
     /**
@@ -428,32 +427,6 @@ class QueueManager
                 'locked_by = ?' => $lockedBy,
             ]
         );
-    }
-
-    /**
-     * Return processing product IDs keyed by product ID so enqueue cannot steal active leases.
-     *
-     * @param int[] $productIds
-     * @return array<int, bool>
-     */
-    private function getProcessingProductIds(array $productIds): array
-    {
-        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
-        if (empty($productIds)) {
-            return [];
-        }
-
-        $select = $this->getConnection()->select()
-            ->from($this->getTableName(), ['product_id'])
-            ->where('product_id IN (?)', $productIds)
-            ->where('status = ?', self::STATUS_PROCESSING);
-
-        $processing = [];
-        foreach ($this->getConnection()->fetchCol($select) as $productId) {
-            $processing[(int) $productId] = true;
-        }
-
-        return $processing;
     }
 
     /**

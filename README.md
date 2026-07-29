@@ -58,7 +58,7 @@ Click **"Edit Image with MageAI"** (next to the generate button) to open a popup
 
 ### Generate Product Attributes From Images
 
-Configure **Product Image Analysis > Update These Attributes Based on Product Image Analysis** with one row per target product attribute. Only safe product inputs are offered (`text`, `textarea`, `select`, `multiselect`). Each row has its own prompt description, update policy, and option-creation setting. Existing values for those configured attributes are sent as context so blank title, description, SEO meta, or keyword fields can be generated from populated fields.
+Configure **Product Image Analysis > Update These Attributes Based on Product Image Analysis** with one row per target product attribute. Only safe product inputs are offered (`text`, `textarea`, `select`, `multiselect`). Each row has its own prompt description, update policy, option-creation setting, and optional **Option Source**. Existing values for those configured attributes are sent as context so blank title, description, SEO meta, or tag fields can be generated from populated fields.
 
 Update policies:
 
@@ -68,7 +68,9 @@ Update policies:
 - **Merge + promote earlier rows** — merge values and remove duplicate labels from later configured multiselect rows; useful for moving primary keywords out of secondary/tertiary keyword attributes.
 - **Always replace** — overwrite the existing field value.
 
-For select/multiselect fields, **Create Options = No** means generated labels must match existing options. Enable it only for tag-style attributes such as catalog keyword tiers where MageAI may add missing options.
+For select/multiselect fields, **Create Options = No** means generated labels must match existing options. Enable it only for tag-style attributes where MageAI may add missing options. Set **Option Source** when several configured attributes deliberately use one shared option table; otherwise leave it as **Own attribute**. The optional **Blocked Generated Option Labels** setting rejects merchant-defined labels and is empty by default.
+
+The default image-analysis prompt and target rows are store-neutral. Put store-specific catalog vocabulary, content requirements, and option exclusions in **Image Metadata Prompt**, **Image Analysis System Prompt**, the target-row instructions, and **Blocked Generated Option Labels**. Existing tiered configurations that use **Merge + promote earlier rows** retain their earlier row as the option source until an explicit Option Source is saved.
 
 Click **"Analyze Images with MageAI and update content"** after **"Edit Image with MageAI"** in the Images And Videos section to analyze the saved product image and populate the configured attributes in the product form.
 

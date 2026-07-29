@@ -46,6 +46,10 @@ class FlushSkipper
      */
     public function run(callable $callback)
     {
+        if (PHP_SAPI !== 'cli') {
+            return $callback();
+        }
+
         $this->depth++;
         $previousStatuses = [];
 

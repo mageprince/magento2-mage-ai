@@ -92,7 +92,7 @@ class MissingDataScorer
     }
 
     /**
-     * Return GoodSalt-friendly defaults while supporting custom configured attributes.
+     * Return generic weights for common catalog attributes.
      *
      * @param string $attributeCode
      * @return int
@@ -105,9 +105,6 @@ class MissingDataScorer
             'meta_title' => 2,
             'meta_description' => 2,
             'meta_keyword' => 1,
-            'keywords' => 3,
-            'secondary_keywords' => 2,
-            'tertiary_keywords' => 1,
         ];
 
         return $weights[$attributeCode] ?? 1;

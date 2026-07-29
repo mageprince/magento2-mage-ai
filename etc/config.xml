@@ -85,14 +85,16 @@ Follow these guidelines:
                 <temperature>0</temperature>
                 <ollama_num_ctx>8192</ollama_num_ctx>
                 <ollama_think>0</ollama_think>
+                <system_prompt><![CDATA[You analyze ecommerce product images and return catalog metadata as valid JSON. Describe only image details and product context that are supported by the available evidence. Do not use markdown, explanations, or code fences.]]></system_prompt>
                 <prompt><![CDATA[Analyze the product image and generate catalog attribute values for an ecommerce product.
 
 Guidelines:
 - Base the result primarily on visible image content.
 - Use existing product attribute values as supporting context when they are provided, especially when generating a blank attribute from already-populated title, description, or keyword fields.
-- Do not invent artist names, SKUs, brands, Bible verses, denominations, historical events, or proper nouns unless they are visible in the image or present in the existing product context.
+- Do not invent names, SKUs, brands, events, or other proper nouns unless they are visible in the image or present in the existing product context.
 - Follow each target attribute's instruction exactly.
 - Return values through the requested JSON schema only. Do not wrap JSON in markdown or code fences.]]></prompt>
+                <blocked_option_labels/>
                 <attributes>
                     <name>
                         <attribute>name</attribute>
@@ -124,24 +126,6 @@ Guidelines:
                         <policy>empty</policy>
                         <allow_new_options>0</allow_new_options>
                     </meta_keyword>
-                    <keywords>
-                        <attribute>keywords</attribute>
-                        <instruction>Generate the strongest primary catalog/search keywords as concise phrases. Return an array of 3-8 phrases. Promote terms here when they are primary subjects, even if currently stored in a secondary or tertiary keyword field.</instruction>
-                        <policy>merge_promote</policy>
-                        <allow_new_options>1</allow_new_options>
-                    </keywords>
-                    <secondary_keywords>
-                        <attribute>secondary_keywords</attribute>
-                        <instruction>Generate supporting subject, setting, style, season, emotion, and usage keywords. Return an array of 5-12 phrases. Do not repeat terms that belong in primary keywords.</instruction>
-                        <policy>merge</policy>
-                        <allow_new_options>1</allow_new_options>
-                    </secondary_keywords>
-                    <tertiary_keywords>
-                        <attribute>tertiary_keywords</attribute>
-                        <instruction>Generate additional related search terms. Return an array of 5-15 phrases. Do not repeat stronger primary or secondary terms.</instruction>
-                        <policy>merge</policy>
-                        <allow_new_options>1</allow_new_options>
-                    </tertiary_keywords>
                 </attributes>
             </product_image_analysis>
         </mageai>

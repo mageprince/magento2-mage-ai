@@ -22,6 +22,11 @@ use Mageprince\MageAI\Helper\Data as HelperData;
 
 class MetadataApplier
 {
+    private const KEYWORD_ATTRIBUTE_CODES = [];
+    private const MAX_GENERATED_KEYWORD_LABELS = [];
+    private const GENERIC_KEYWORD_LABELS = [];
+    private const GENERIC_KEYWORD_PATTERNS = [];
+
     /**
      * @var ProductAttributeRepositoryInterface
      */
@@ -68,95 +73,14 @@ class MetadataApplier
     protected $attributeLabels = [];
 
     /**
-     * @var string
+     * @var array<string, string>
      */
-    private $keywordContext = '';
+    private $optionSourceAttributes = [];
 
     /**
      * @var array<string, bool>
      */
-    private const KEYWORD_ATTRIBUTE_CODES = [
-        'keywords' => true,
-        'secondary_keywords' => true,
-        'tertiary_keywords' => true,
-    ];
-
-    /**
-     * @var string
-     */
-    private const SHARED_KEYWORD_OPTION_ATTRIBUTE_CODE = 'keywords';
-
-    /**
-     * @var array<string, int>
-     */
-    private const MAX_GENERATED_KEYWORD_LABELS = [
-        'keywords' => 8,
-        'secondary_keywords' => 12,
-        'tertiary_keywords' => 15,
-    ];
-
-    /**
-     * @var array<string, bool>
-     */
-    private const GENERIC_KEYWORD_LABELS = [
-        'abstract' => true,
-        'art' => true,
-        'artwork' => true,
-        'beautiful' => true,
-        'black' => true,
-        'blue' => true,
-        'brown' => true,
-        'child' => true,
-        'children' => true,
-        'colorful' => true,
-        'four' => true,
-        'girl' => true,
-        'good' => true,
-        'gray' => true,
-        'green' => true,
-        'grey' => true,
-        'group' => true,
-        'happy' => true,
-        'happiness' => true,
-        'image' => true,
-        'illustration' => true,
-        'inspiring' => true,
-        'joyful' => true,
-        'joyous' => true,
-        'magenta' => true,
-        'modern' => true,
-        'nice' => true,
-        'orange' => true,
-        'painting' => true,
-        'people' => true,
-        'person' => true,
-        'picture' => true,
-        'purple' => true,
-        'red' => true,
-        'scene' => true,
-        'second' => true,
-        'style' => true,
-        'white' => true,
-        'woman' => true,
-        'yellow' => true,
-        'atmosphere' => true,
-        'silhouetteart' => true,
-        'silhoutteart' => true,
-        'worshipful atmosphere' => true,
-    ];
-
-    /**
-     * @var string[]
-     */
-    private const GENERIC_KEYWORD_PATTERNS = [
-        '/^[0-9]+$/',
-        '/^[0-9]+(?:st|nd|rd|th)$/i',
-        '/^[0-9]{1,2}:[0-9]{2}\s*(?:am|pm)?$/i',
-        '/^(?:one|two|three|four|five|six|seven|eight|nine|ten)$/i',
-        '/^(?:aries|taurus|gemini|cancer|leo|virgo|libra|scorpio|sagittarius|capricorn|aquarius|pisces)$/i',
-        '/\batmosphere\b/i',
-        '/^tide of\b/i',
-    ];
+    private $blockedOptionLabels = [];
 
     /**
      * @param ProductAttributeRepositoryInterface $attributeRepository
@@ -194,11 +118,10 @@ class MetadataApplier
     public function apply(ProductInterface $product, array $metadata, bool $force = false, bool $dryRun = false): array
     {
         $changes = [];
-        $previousKeywordContext = $this->keywordContext;
-        $this->keywordContext = $this->buildKeywordContext($product, $metadata);
-
+        $configs = $this->helper->getProductImageAnalysisAttributeConfig();
+        $this->prepareConfiguredOptionSources($configs);
+        $this->blockedOptionLabels = $this->helper->getProductImageAnalysisBlockedOptionLabels();
         try {
-            $configs = $this->helper->getProductImageAnalysisAttributeConfig();
             foreach ($configs as $attributeCode => $config) {
                 if (!array_key_exists($attributeCode, $metadata)) {
                     continue;
@@ -208,7 +131,7 @@ class MetadataApplier
 
             $this->dedupePromotedMultiselectValues($product, $configs, $dryRun, $changes);
         } finally {
-            $this->keywordContext = $previousKeywordContext;
+            $this->resetConfiguredOptionSources();
         }
 
         return $changes;
@@ -229,11 +152,10 @@ class MetadataApplier
     {
         $fields = [];
         $options = [];
-        $previousKeywordContext = $this->keywordContext;
-        $this->keywordContext = $this->buildKeywordContext($product, $metadata);
-
+        $configs = $this->helper->getProductImageAnalysisAttributeConfig();
+        $this->prepareConfiguredOptionSources($configs);
+        $this->blockedOptionLabels = $this->helper->getProductImageAnalysisBlockedOptionLabels();
         try {
-            $configs = $this->helper->getProductImageAnalysisAttributeConfig();
             foreach ($configs as $attributeCode => $config) {
                 if (!array_key_exists($attributeCode, $metadata)) {
                     continue;
@@ -244,6 +166,9 @@ class MetadataApplier
                 }
 
                 $attribute = $this->getAttribute($attributeCode);
+                if (!$attribute) {
+                    continue;
+                }
                 $input = (string) $attribute->getFrontendInput();
 
                 if ($input === 'multiselect' || $input === 'select') {
@@ -265,7 +190,7 @@ class MetadataApplier
 
             $this->dedupePromotedFormValues($product, $configs, $fields);
         } finally {
-            $this->keywordContext = $previousKeywordContext;
+            $this->resetConfiguredOptionSources();
         }
 
         return [
@@ -283,6 +208,9 @@ class MetadataApplier
     public function hasGeneratedMetadata(ProductInterface $product): bool
     {
         foreach ($this->helper->getProductImageAnalysisAttributeConfig() as $attributeCode => $config) {
+            if (!$this->getAttribute($attributeCode)) {
+                continue;
+            }
             if ($this->canUpdateConfiguredAttribute($product, $attributeCode, false, $config['policy'])) {
                 return false;
             }
@@ -317,6 +245,9 @@ class MetadataApplier
         }
 
         $attribute = $this->getAttribute($attributeCode);
+        if (!$attribute) {
+            return;
+        }
         $input = (string) $attribute->getFrontendInput();
 
         if ($input === 'multiselect' || $input === 'select') {
@@ -409,9 +340,13 @@ class MetadataApplier
         $option->setIsDefault(false);
 
         try {
+            $optionAttribute = $this->getAttribute($this->getOptionAttributeCode($attributeCode));
+            if (!$optionAttribute) {
+                return false;
+            }
             $optionId = $this->attributeOptionManagement->add(
                 Product::ENTITY,
-                $this->getAttribute($this->getOptionAttributeCode($attributeCode))->getAttributeId(),
+                $optionAttribute->getAttributeId(),
                 $option
             );
         } catch (InputException $e) {
@@ -450,6 +385,9 @@ class MetadataApplier
     private function getOptionIdFromAttributeCode(string $optionAttributeCode, string $label, bool $force = false)
     {
         $attribute = $this->getAttribute($optionAttributeCode);
+        if (!$attribute) {
+            return false;
+        }
         $attributeId = $attribute->getAttributeId();
 
         if ($force || !isset($this->attributeValues[$attributeId])) {
@@ -500,20 +438,14 @@ class MetadataApplier
     }
 
     /**
-     * Resolve the attribute whose option table should be used for a configured field.
-     *
-     * GoodSalt keyword attributes share the primary keywords option set through a
-     * custom source model, so secondary and tertiary keyword values must store
-     * option IDs from keywords instead of creating isolated options on each field.
+     * Resolve the configured attribute that owns option IDs for a target field.
      *
      * @param string $attributeCode
      * @return string
      */
     private function getOptionAttributeCode(string $attributeCode): string
     {
-        return isset(self::KEYWORD_ATTRIBUTE_CODES[$attributeCode])
-            ? self::SHARED_KEYWORD_OPTION_ATTRIBUTE_CODE
-            : $attributeCode;
+        return $this->optionSourceAttributes[$attributeCode] ?? $attributeCode;
     }
 
     /**
@@ -524,8 +456,12 @@ class MetadataApplier
      */
     private function getAttribute(string $attributeCode)
     {
-        if (!isset($this->attributes[$attributeCode])) {
-            $this->attributes[$attributeCode] = $this->attributeRepository->get($attributeCode);
+        if (!array_key_exists($attributeCode, $this->attributes)) {
+            try {
+                $this->attributes[$attributeCode] = $this->attributeRepository->get($attributeCode);
+            } catch (\Exception $e) {
+                $this->attributes[$attributeCode] = null;
+            }
         }
 
         return $this->attributes[$attributeCode];
@@ -566,7 +502,7 @@ class MetadataApplier
     }
 
     /**
-     * Normalize option IDs and collapse duplicate keyword labels to canonical IDs.
+     * Normalize option IDs against a configured shared option source.
      *
      * @param string $attributeCode
      * @param array<int, string|int> $optionIds
@@ -575,7 +511,7 @@ class MetadataApplier
     private function normalizeOptionIds(string $attributeCode, array $optionIds): array
     {
         $optionIds = array_values(array_unique(array_filter(array_map('trim', array_map('strval', $optionIds)), 'strlen')));
-        if (!isset(self::KEYWORD_ATTRIBUTE_CODES[$attributeCode])) {
+        if ($this->getOptionAttributeCode($attributeCode) === $attributeCode) {
             return $optionIds;
         }
 
@@ -667,7 +603,7 @@ class MetadataApplier
         }
 
         $ids = array_values(array_unique($ids));
-        if (!isset(self::KEYWORD_ATTRIBUTE_CODES[$attributeCode])) {
+        if ($this->getOptionAttributeCode($attributeCode) === $attributeCode) {
             return $ids;
         }
 
@@ -675,10 +611,7 @@ class MetadataApplier
     }
 
     /**
-     * Translate legacy secondary/tertiary keyword IDs to shared keyword IDs.
-     *
-     * Existing shared keyword IDs are preserved before legacy-label lookup so an
-     * old secondary/tertiary option ID that now exists in keywords is not changed.
+     * Translate target option IDs to IDs from its configured option source.
      * Unmapped legacy IDs are retained rather than dropped to avoid data loss.
      *
      * @param string $attributeCode
@@ -687,24 +620,21 @@ class MetadataApplier
      */
     private function translateKeywordOptionIds(string $attributeCode, array $ids): array
     {
+        $sourceAttributeCode = $this->getOptionAttributeCode($attributeCode);
         $translated = [];
         foreach ($ids as $id) {
-            $sharedLabels = $this->getOptionLabelsByIds(self::SHARED_KEYWORD_OPTION_ATTRIBUTE_CODE, [$id]);
+            $sharedLabels = $this->getOptionLabelsByIds($sourceAttributeCode, [$id], false);
             $sharedLabel = $sharedLabels[0] ?? '';
             if ($sharedLabel !== '') {
-                $sharedOptionId = $this->getOptionId(self::SHARED_KEYWORD_OPTION_ATTRIBUTE_CODE, $sharedLabel);
+                $sharedOptionId = $this->getOptionIdFromAttributeCode($sourceAttributeCode, $sharedLabel);
                 $translated[] = $sharedOptionId ? (string) $sharedOptionId : (string) $id;
-                continue;
-            }
-
-            if ($attributeCode === self::SHARED_KEYWORD_OPTION_ATTRIBUTE_CODE) {
                 continue;
             }
 
             $legacyLabels = $this->getOptionLabelsByIds($attributeCode, [$id], false);
             $legacyLabel = $legacyLabels[0] ?? '';
             if ($legacyLabel !== '') {
-                $sharedOptionId = $this->getOptionId(self::SHARED_KEYWORD_OPTION_ATTRIBUTE_CODE, $legacyLabel);
+                $sharedOptionId = $this->getOptionIdFromAttributeCode($sourceAttributeCode, $legacyLabel);
                 if ($sharedOptionId) {
                     $translated[] = (string) $sharedOptionId;
                     continue;
@@ -741,6 +671,9 @@ class MetadataApplier
     {
         $optionAttributeCode = $useSharedOptionAttribute ? $this->getOptionAttributeCode($attributeCode) : $attributeCode;
         $attribute = $this->getAttribute($optionAttributeCode);
+        if (!$attribute) {
+            return [];
+        }
         $attributeId = $attribute->getAttributeId();
         $this->getOptionIdFromAttributeCode($optionAttributeCode, '__mageai_cache_warm__');
 
@@ -817,7 +750,7 @@ class MetadataApplier
         $promoted = [];
         foreach ($configs as $attributeCode => $config) {
             $attribute = $this->getAttribute($attributeCode);
-            if ((string) $attribute->getFrontendInput() !== 'multiselect') {
+            if (!$attribute || (string) $attribute->getFrontendInput() !== 'multiselect') {
                 continue;
             }
 
@@ -871,7 +804,7 @@ class MetadataApplier
         $promoted = [];
         foreach ($configs as $attributeCode => $config) {
             $attribute = $this->getAttribute($attributeCode);
-            if ((string) $attribute->getFrontendInput() !== 'multiselect') {
+            if (!$attribute || (string) $attribute->getFrontendInput() !== 'multiselect') {
                 continue;
             }
 
@@ -925,8 +858,9 @@ class MetadataApplier
             }
         }
 
-        $labels = $this->filterGeneratedKeywordLabels($attributeCode, array_values($normalized));
-        return $this->limitGeneratedKeywordLabels($attributeCode, $labels);
+        return array_values(array_filter($normalized, function (string $label): bool {
+            return !isset($this->blockedOptionLabels[strtolower($label)]);
+        }));
     }
 
     /**
@@ -1164,6 +1098,9 @@ class MetadataApplier
      */
     public function canUpdateConfiguredAttribute(ProductInterface $product, string $attributeCode, bool $force, string $policy): bool
     {
+        if (!$this->getAttribute($attributeCode)) {
+            return false;
+        }
         if ($force) {
             return true;
         }
@@ -1181,6 +1118,41 @@ class MetadataApplier
         }
 
         return !$this->hasValue($product->getData($attributeCode));
+    }
+
+    /**
+     * Build generic option-source mappings from explicit configuration.
+     *
+     * Legacy rows that use an earlier merge-and-promote row retain their shared
+     * option source until an administrator saves an explicit Option Source value.
+     *
+     * @param array<string, array{attribute: string, instruction: string, policy: string, allow_new_options: bool, option_source_attribute: string}> $configs
+     * @return void
+     */
+    private function prepareConfiguredOptionSources(array $configs): void
+    {
+        $promotionSource = '';
+        foreach ($configs as $attributeCode => $config) {
+            $source = trim((string) ($config['option_source_attribute'] ?? ''));
+            if ($source === '' && $promotionSource !== '' && $config['policy'] === HelperData::IMAGE_ANALYSIS_POLICY_MERGE) {
+                $source = $promotionSource;
+            }
+            $this->optionSourceAttributes[$attributeCode] = $source !== '' ? $source : $attributeCode;
+            if ($config['policy'] === HelperData::IMAGE_ANALYSIS_POLICY_MERGE_PROMOTE) {
+                $promotionSource = $this->optionSourceAttributes[$attributeCode];
+            }
+        }
+    }
+
+    /**
+     * Clear request-specific option configuration after applying metadata.
+     *
+     * @return void
+     */
+    private function resetConfiguredOptionSources(): void
+    {
+        $this->optionSourceAttributes = [];
+        $this->blockedOptionLabels = [];
     }
 
     /**

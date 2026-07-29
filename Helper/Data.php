@@ -64,7 +64,9 @@ class Data extends AbstractHelper
     public const XML_PATH_IMAGE_ANALYSIS_TEMPERATURE = 'mageai/product_image_analysis/temperature';
     public const XML_PATH_IMAGE_ANALYSIS_OLLAMA_NUM_CTX = 'mageai/product_image_analysis/ollama_num_ctx';
     public const XML_PATH_IMAGE_ANALYSIS_OLLAMA_THINK = 'mageai/product_image_analysis/ollama_think';
+    public const XML_PATH_IMAGE_ANALYSIS_SYSTEM_PROMPT = 'mageai/product_image_analysis/system_prompt';
     public const XML_PATH_IMAGE_ANALYSIS_ATTRIBUTES = 'mageai/product_image_analysis/attributes';
+    public const XML_PATH_IMAGE_ANALYSIS_BLOCKED_OPTION_LABELS = 'mageai/product_image_analysis/blocked_option_labels';
 
     private const DEFAULT_IMAGE_ANALYSIS_OLLAMA_NUM_CTX = 8192;
 
@@ -403,6 +405,35 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Get the merchant-configured system prompt for product image analysis.
+     *
+     * @return string
+     */
+    public function getProductImageAnalysisSystemPrompt(): string
+    {
+        return (string) ($this->getConfig(self::XML_PATH_IMAGE_ANALYSIS_SYSTEM_PROMPT) ?: '');
+    }
+
+    /**
+     * Get normalized labels that must not be created or selected by image analysis.
+     *
+     * @return array<string, bool>
+     */
+    public function getProductImageAnalysisBlockedOptionLabels(): array
+    {
+        $labels = preg_split('/[\r\n,]+/', (string) $this->getConfig(self::XML_PATH_IMAGE_ANALYSIS_BLOCKED_OPTION_LABELS)) ?: [];
+        $blocked = [];
+        foreach ($labels as $label) {
+            $label = strtolower(trim($label));
+            if ($label !== '') {
+                $blocked[$label] = true;
+            }
+        }
+
+        return $blocked;
+    }
+
+    /**
      * Get max tokens for product image metadata analysis.
      *
      * @return int
@@ -465,7 +496,7 @@ class Data extends AbstractHelper
     /**
      * Get configured image-analysis target attributes with update behaviour.
      *
-     * @return array<string, array{attribute: string, instruction: string, policy: string, allow_new_options: bool}>
+     * @return array<string, array{attribute: string, instruction: string, policy: string, allow_new_options: bool, option_source_attribute: string}>
      */
     public function getProductImageAnalysisAttributeConfig(): array
     {
@@ -490,6 +521,7 @@ class Data extends AbstractHelper
                     'allow_new_options' => $this->normalizeBoolean(
                         $row['allow_new_options'] ?? $this->getDefaultAllowNewOptions($code)
                     ),
+                    'option_source_attribute' => trim((string) ($row['option_source_attribute'] ?? '')),
                 ];
             }
         }
@@ -533,7 +565,7 @@ class Data extends AbstractHelper
     /**
      * Get default target attributes for image analysis.
      *
-     * @return array<string, array{attribute: string, instruction: string, policy: string, allow_new_options: bool}>
+     * @return array<string, array{attribute: string, instruction: string, policy: string, allow_new_options: bool, option_source_attribute: string}>
      */
     private function getDefaultImageAnalysisAttributeConfig(): array
     {
@@ -544,39 +576,24 @@ class Data extends AbstractHelper
                 'allow_new_options' => false,
             ],
             'description' => [
-                'instruction' => 'Generate one clear, product-specific ecommerce description paragraph, 80-180 words. Name the visible Biblical subject, people, setting, action, and ministry use when evident. Avoid generic filler such as beautiful image, powerful artwork, inspiring scene, or Christian art unless it adds specific meaning.',
+                'instruction' => 'Generate one clear, product-specific ecommerce description paragraph, 80-180 words. Describe visible people, setting, and action when evident. Avoid generic filler.',
                 'policy' => self::IMAGE_ANALYSIS_POLICY_EMPTY,
                 'allow_new_options' => false,
             ],
             'meta_title' => [
-                'instruction' => 'Generate a concise SEO meta title under 60 characters. Lead with the named Biblical subject, event, person, or symbol; avoid generic words like art, image, beautiful, inspiring, or religious unless needed for clarity.',
+                'instruction' => 'Generate a concise SEO meta title under 60 characters based on visible image content and product context.',
                 'policy' => self::IMAGE_ANALYSIS_POLICY_EMPTY,
                 'allow_new_options' => false,
             ],
             'meta_description' => [
-                'instruction' => 'Generate a natural SEO meta description under 155 characters. Describe the specific scene and likely ministry or worship use; avoid generic ecommerce or inspirational filler.',
+                'instruction' => 'Generate a natural SEO meta description under 155 characters based on visible image content and product context.',
                 'policy' => self::IMAGE_ANALYSIS_POLICY_EMPTY,
                 'allow_new_options' => false,
             ],
             'meta_keyword' => [
-                'instruction' => 'Generate concise SEO meta keywords from specific visible subjects, named Biblical events, people, places, symbols, and use cases. Return a comma-separated phrase list; avoid colors, counts, emotions, and generic terms unless central to the image.',
+                'instruction' => 'Generate concise SEO meta keywords from specific visible subjects and product context. Return a comma-separated phrase list.',
                 'policy' => self::IMAGE_ANALYSIS_POLICY_EMPTY,
                 'allow_new_options' => false,
-            ],
-            'keywords' => [
-                'instruction' => 'Generate 3-8 strongest primary catalog/search keywords as concise subject phrases. Use named Biblical figures, events, places, symbols, and core use cases. Do not use colors, counts, moods, style words, or generic terms like art, image, painting, abstract, modern, good, happy, people, person, scene, or beautiful.',
-                'policy' => self::IMAGE_ANALYSIS_POLICY_MERGE_PROMOTE,
-                'allow_new_options' => true,
-            ],
-            'secondary_keywords' => [
-                'instruction' => 'Generate 5-12 supporting keywords for secondary subjects, setting, season, scripture theme, ministry use, and visual symbols. Do not repeat primary terms, and avoid bare colors, counts, generic emotions, and generic media words.',
-                'policy' => self::IMAGE_ANALYSIS_POLICY_MERGE,
-                'allow_new_options' => true,
-            ],
-            'tertiary_keywords' => [
-                'instruction' => 'Generate 5-15 additional long-tail related search terms only when they add specific subject, doctrine, story, worship, or teaching context. Do not repeat stronger primary or secondary terms or add generic filler.',
-                'policy' => self::IMAGE_ANALYSIS_POLICY_MERGE,
-                'allow_new_options' => true,
             ],
         ];
 
@@ -587,6 +604,7 @@ class Data extends AbstractHelper
                 'instruction' => $data['instruction'],
                 'policy' => $data['policy'],
                 'allow_new_options' => $data['allow_new_options'],
+                'option_source_attribute' => '',
             ];
         }
 
@@ -623,13 +641,6 @@ class Data extends AbstractHelper
         if ($attributeCode === 'name') {
             return self::IMAGE_ANALYSIS_POLICY_PLACEHOLDER;
         }
-        if ($attributeCode === 'keywords') {
-            return self::IMAGE_ANALYSIS_POLICY_MERGE_PROMOTE;
-        }
-        if (in_array($attributeCode, ['secondary_keywords', 'tertiary_keywords'], true)) {
-            return self::IMAGE_ANALYSIS_POLICY_MERGE;
-        }
-
         return self::IMAGE_ANALYSIS_POLICY_EMPTY;
     }
 
@@ -641,7 +652,7 @@ class Data extends AbstractHelper
      */
     private function getDefaultAllowNewOptions(string $attributeCode): bool
     {
-        return in_array($attributeCode, ['keywords', 'secondary_keywords', 'tertiary_keywords'], true);
+        return false;
     }
 
     /**

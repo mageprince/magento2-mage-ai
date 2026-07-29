@@ -18,7 +18,6 @@ use Mageprince\MageAI\Model\Query\QueryException;
 
 class ImageAnalyzer
 {
-    private const SYSTEM_PROMPT = 'You analyze Christian art product images for ecommerce catalog metadata. Return only valid JSON. Be specific to the visible Biblical subject, event, people, setting, symbols, and ministry use. Avoid generic filler, generic emotions, bare colors, counts, and media words unless central to the image. Do not use markdown, explanations, or code fences.';
     private const REQUEST_TIMEOUT = 900;
 
     /**
@@ -146,7 +145,7 @@ class ImageAnalyzer
                 ],
             ],
             'messages' => [
-                ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
+                ['role' => 'system', 'content' => $this->helper->getProductImageAnalysisSystemPrompt()],
                 [
                     'role' => 'user',
                     'content' => [
@@ -182,7 +181,7 @@ class ImageAnalyzer
             'model' => $this->helper->getOllamaModel(),
             'think' => $this->helper->isProductImageAnalysisOllamaThinkEnabled(),
             'messages' => [
-                ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
+                ['role' => 'system', 'content' => $this->helper->getProductImageAnalysisSystemPrompt()],
                 [
                     'role' => 'user',
                     'content' => $prompt,
@@ -327,7 +326,7 @@ class ImageAnalyzer
      * Build full user prompt including target instructions and existing values.
      *
      * @param ProductInterface $product
-     * @param array<string, array{attribute: string, instruction: string, policy: string, allow_new_options: bool}> $targetAttributes
+     * @param array<string, array{attribute: string, instruction: string, policy: string, allow_new_options: bool, option_source_attribute: string}> $targetAttributes
      * @param string $previousProductName
      * @return string
      */
@@ -352,20 +351,6 @@ class ImageAnalyzer
             );
         }
 
-        $lines[] = '';
-        $lines[] = 'Quality rules:';
-        $lines[] = '- Prefer specific Biblical subjects, named figures, events, places, symbols, doctrine, season, and ministry/worship use cases.';
-        $lines[] = '- Primary keywords must be the main searchable subjects or story terms, not colors, numbers, moods, style labels, or generic product/media words.';
-        $lines[] = '- Avoid generic keyword labels such as art, image, picture, painting, scene, abstract, modern, good, beautiful, happy, people, person, blue, red, green, purple, yellow, orange, black, white, one, two, three, four, 2nd, or second.';
-        $lines[] = '- Descriptions must identify what is visibly happening and should not use vague filler like beautiful image, powerful artwork, inspiring scene, or perfect for any use.';
-        $lines[] = '- Do not invent people, locations, objects, scripture references, or doctrine that are not visible or strongly supported by the existing product context.';
-        $lines[] = '- If the existing title names the Biblical event or subject, preserve that meaning and use it to improve missing SEO fields.';
-        $lines[] = '- Return every requested schema key. Use JSON strings for scalar fields and JSON arrays for keyword fields.';
-        $lines[] = '- Do not return blank name, description, meta_title, meta_description, or meta_keyword values when the image or current product context provides enough evidence for a safe value.';
-        $lines[] = '- Keep meta_title under 60 characters when possible and meta_description under 155 characters when possible.';
-        $lines[] = '- Do not repeat the same keyword across primary, secondary, and tertiary keyword fields.';
-        $lines[] = '- Return empty arrays for keyword fields when no specific non-generic terms can be justified.';
-
         $normalizedPreviousProductName = preg_replace('/[\p{C}\s]+/u', ' ', $previousProductName);
         $previousProductName = is_string($normalizedPreviousProductName) ? trim($normalizedPreviousProductName) : '';
         if ($previousProductName !== '') {
@@ -389,7 +374,7 @@ class ImageAnalyzer
     /**
      * Build JSON schema for configured target attributes.
      *
-     * @param array<string, array{attribute: string, instruction: string, policy: string, allow_new_options: bool}> $targetAttributes
+     * @param array<string, array{attribute: string, instruction: string, policy: string, allow_new_options: bool, option_source_attribute: string}> $targetAttributes
      * @return array<string, mixed>
      */
     private function buildResponseSchema(array $targetAttributes): array
@@ -413,7 +398,7 @@ class ImageAnalyzer
                     'description' => $config['instruction'],
                     'items' => $items,
                     'uniqueItems' => true,
-                    'maxItems' => $this->getMaxItemsForAttribute($code),
+                    'maxItems' => 20,
                 ];
                 continue;
             }
@@ -437,26 +422,6 @@ class ImageAnalyzer
             'properties' => $properties,
             'required' => $required,
         ];
-    }
-
-    /**
-     * Get a safe maximum number of generated list items for known keyword attributes.
-     *
-     * @param string $code
-     * @return int
-     */
-    private function getMaxItemsForAttribute(string $code): int
-    {
-        switch ($code) {
-            case 'keywords':
-                return 8;
-            case 'secondary_keywords':
-                return 12;
-            case 'tertiary_keywords':
-                return 15;
-            default:
-                return 20;
-        }
     }
 
     /**

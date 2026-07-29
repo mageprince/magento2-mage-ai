@@ -227,6 +227,10 @@
                     <label>Image Metadata Prompt</label>
                     <comment><![CDATA[Used by <code>bin/magento mageai:generate:image-metadata</code> and the admin product edit image-analysis button. The product's image is sent to the configured AI provider. Attribute-specific JSON output instructions are built from the rows below.]]></comment>
                 </field>
+                <field id="system_prompt" translate="label" type="textarea" sortOrder="15" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                    <label>Image Analysis System Prompt</label>
+                    <comment>Provider-level instructions for image analysis. Keep this store-specific; the default is domain-agnostic.</comment>
+                </field>
                 <field id="max_tokens" translate="label" type="text" sortOrder="20" showInDefault="1" canRestore="1">
                     <label>Image Analysis Max Tokens</label>
                     <validate>required-entry validate-digits validate-greater-than-zero</validate>
@@ -250,7 +254,11 @@
                     <label>Update These Attributes Based on Product Image Analysis</label>
                     <frontend_model>Mageprince\MageAI\Block\Adminhtml\System\Config\Form\Field\ImageAnalysisAttributes</frontend_model>
                     <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
-                    <comment><![CDATA[Add one row per safe product attribute to update. Supported inputs are text, textarea, select, and multiselect. The update policy controls whether MageAI fills only empty fields, replaces values, or merges keyword/tag-style multiselects. Enable "Create Options" only for tag-style select/multiselect attributes where AI may add missing options. Existing values for configured attributes are included as context, so empty SEO/title/description fields can be generated from populated values.]]></comment>
+                    <comment><![CDATA[Add one row per safe product attribute to update. Supported inputs are text, textarea, select, and multiselect. The update policy controls whether MageAI fills only empty fields, replaces values, or merges tag-style multiselects. Set Option Source only when multiple target attributes intentionally share one option table. Enable "Create Options" only for tag-style select/multiselect attributes where AI may add missing options. Existing values for configured attributes are included as context, so empty SEO/title/description fields can be generated from populated values.]]></comment>
+                </field>
+                <field id="blocked_option_labels" translate="label" type="textarea" sortOrder="70" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                    <label>Blocked Generated Option Labels</label>
+                    <comment>Optional comma- or line-separated labels that MageAI must not create or select. Empty by default.</comment>
                 </field>
             </group>
         </section>
